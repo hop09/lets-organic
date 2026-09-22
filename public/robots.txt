@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /console-gate-4527/
+Disallow: /api/auth/
+Disallow: /api/upload/
+Allow: /
+
+Sitemap: https://letsorganic.store/sitemap.xml
