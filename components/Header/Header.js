@@ -58,6 +58,10 @@ export default function Header() {
   const { totalItems: wishlistCount } = useWishlist();
   const { settings } = useSettings();
 
+  const liveCategoryLinks = settings?.categories?.length
+    ? settings.categories.map(c => ({ label: c.name, href: `/shop?category=${c.slug || c.id}` }))
+    : categoryLinks;
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -165,7 +169,7 @@ export default function Header() {
                 </Link>
                 {link.hasDropdown && dropdownOpen && (
                   <div className={styles.dropdown}>
-                    {categoryLinks.map(cat => (
+                    {liveCategoryLinks.map(cat => (
                       <Link key={cat.label} href={cat.href} className={styles.dropdownItem}>
                         {cat.label}
                       </Link>
@@ -273,7 +277,7 @@ export default function Header() {
                 </Link>
               ))}
               <div className={styles.mobileCategoryHeader}>Categories</div>
-              {categoryLinks.map(cat => (
+              {liveCategoryLinks.map(cat => (
                 <Link
                   key={cat.label}
                   href={cat.href}

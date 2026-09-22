@@ -413,10 +413,10 @@ export default function HomePage() {
           </div>
 
           <div className={styles.categoryGrid}>
-            {categories.map(cat => (
+            {(settings?.categories?.length ? settings.categories : categories).map(cat => (
               <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
+                key={cat.slug || cat.id}
+                href={`/shop?category=${cat.slug || cat.id}`}
                 className={styles.categoryCard}
               >
                 <div className={styles.categoryImgWrap}>

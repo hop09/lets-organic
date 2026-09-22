@@ -1,8 +1,10 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { categories as fallbackCategories } from '@/data/products';
 
 const DEFAULT_SETTINGS = {
+  categories: fallbackCategories,
   siteName: 'Lets Organic',
   tagline: 'Pure Organic Living',
   logoText: 'Lets Organic',

@@ -1,7 +1,79 @@
 import mongoose from 'mongoose';
 
+const CategorySchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    slug: { type: String, required: true },
+    name: { type: String, required: true },
+    image: { type: String, default: '' },
+    badge: { type: String, default: '' },
+    tagline: { type: String, default: '' },
+    count: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const SiteSettingsSchema = new mongoose.Schema(
   {
+    categories: {
+      type: [CategorySchema],
+      default: [
+        {
+          id: 'skincare',
+          slug: 'skincare',
+          name: 'Skincare',
+          image: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600&h=700&fit=crop',
+          count: 6,
+          badge: '6 Formulas',
+          tagline: 'Nourish & Glow',
+        },
+        {
+          id: 'superfoods',
+          slug: 'superfoods',
+          name: 'Superfoods',
+          image: 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=600&h=700&fit=crop',
+          count: 4,
+          badge: 'Super Harvest',
+          tagline: 'Pure Energy',
+        },
+        {
+          id: 'wellness',
+          slug: 'wellness',
+          name: 'Wellness',
+          image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=700&fit=crop',
+          count: 4,
+          badge: 'Daily Ritual',
+          tagline: 'Mind & Body',
+        },
+        {
+          id: 'home',
+          slug: 'home',
+          name: 'Home & Living',
+          image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=600&h=700&fit=crop',
+          count: 3,
+          badge: 'Eco Living',
+          tagline: 'Clean Living',
+        },
+        {
+          id: 'haircare',
+          slug: 'haircare',
+          name: 'Hair Care',
+          image: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600&h=700&fit=crop',
+          count: 3,
+          badge: 'Botanical',
+          tagline: 'Deep Moisture',
+        },
+        {
+          id: 'essentials',
+          slug: 'essentials',
+          name: 'Essential Oils',
+          image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&h=700&fit=crop',
+          count: 4,
+          badge: 'Pure Extracts',
+          tagline: '100% Organic',
+        },
+      ],
+    },
     siteName: {
       type: String,
       default: 'Lets Organic',

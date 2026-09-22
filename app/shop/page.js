@@ -14,8 +14,9 @@ function ShopContent() {
   const [sortBy, setSortBy] = useState('featured');
   const [gridSize, setGridSize] = useState('normal');
 
-  // Real-time products state
+  // Real-time products and categories state
   const [productsList, setProductsList] = useState(fallbackProducts);
+  const [categoriesList, setCategoriesList] = useState(categories);
 
   useEffect(() => {
     async function loadProducts() {
@@ -31,7 +32,23 @@ function ShopContent() {
         console.warn('Fallback to local products list');
       }
     }
+
+    async function loadCategories() {
+      try {
+        const res = await fetch('/api/categories');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.categories?.length > 0) {
+            setCategoriesList(data.categories);
+          }
+        }
+      } catch (err) {
+        console.warn('Fallback to local categories list');
+      }
+    }
+
     loadProducts();
+    loadCategories();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -67,7 +84,7 @@ function ShopContent() {
       <div className={styles.shopHeader}>
         <div className="container-wide">
           <h1 className={styles.shopTitle}>
-            {activeCategory === 'all' ? 'All Products' : categories.find(c => c.slug === activeCategory)?.name || 'Shop'}
+            {activeCategory === 'all' ? 'All Products' : categoriesList.find(c => c.slug === activeCategory || c.id === activeCategory)?.name || 'Shop'}
           </h1>
           <p className={styles.shopSubtitle}>
             {filteredProducts.length} certified organic products — curated for wellness & beauty
@@ -85,11 +102,11 @@ function ShopContent() {
             >
               All
             </button>
-            {categories.map(cat => (
+            {categoriesList.map(cat => (
               <button
-                key={cat.id}
-                className={`${styles.filterChip} ${activeCategory === cat.slug ? styles.filterChipActive : ''}`}
-                onClick={() => setActiveCategory(cat.slug)}
+                key={cat.slug || cat.id}
+                className={`${styles.filterChip} ${activeCategory === (cat.slug || cat.id) ? styles.filterChipActive : ''}`}
+                onClick={() => setActiveCategory(cat.slug || cat.id)}
               >
                 {cat.name}
               </button>

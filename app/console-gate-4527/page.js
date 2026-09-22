@@ -28,7 +28,11 @@ import {
   CheckCircle2,
   AlertTriangle,
   Truck,
+  Tag,
+  FolderPlus,
+  Layers,
 } from 'lucide-react';
+import { categories as fallbackCategories } from '@/data/products';
 import styles from './admin.module.css';
 
 export default function AdminConsolePage() {
@@ -52,6 +56,20 @@ export default function AdminConsolePage() {
   const [feedbackFilter, setFeedbackFilter] = useState('all'); // 'all' | 'pending' | 'approved'
   const [settings, setSettings] = useState(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Category state
+  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    slug: '',
+    image: '',
+    badge: 'Organic Harvest',
+    tagline: 'Pure & Natural Botanicals',
+  });
+  const [categorySaving, setCategorySaving] = useState(false);
 
   // Product Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -143,17 +161,114 @@ export default function AdminConsolePage() {
     }
   }, []);
 
+  // Load categories
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      if (data.categories && data.categories.length > 0) {
+        setCategoriesList(data.categories);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchProducts();
       fetchFeedback();
       fetchSettings();
+      fetchCategories();
     }
-  }, [isAuthenticated, fetchProducts, fetchFeedback, fetchSettings]);
+  }, [isAuthenticated, fetchProducts, fetchFeedback, fetchSettings, fetchCategories]);
 
   const showNotification = (type, text) => {
     setStatusMsg({ type, text });
     setTimeout(() => setStatusMsg({ type: '', text: '' }), 4000);
+  };
+
+  const openCategoryModal = (cat = null) => {
+    if (cat) {
+      setEditingCategory(cat);
+      setCategoryForm({
+        name: cat.name || '',
+        slug: cat.slug || cat.id || '',
+        image: cat.image || '',
+        badge: cat.badge || '',
+        tagline: cat.tagline || '',
+      });
+    } else {
+      setEditingCategory(null);
+      setCategoryForm({
+        name: '',
+        slug: '',
+        image: '',
+        badge: 'Organic Harvest',
+        tagline: 'Pure & Natural Botanicals',
+      });
+    }
+    setCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) {
+      showNotification('error', 'Category name is required');
+      return;
+    }
+    setCategorySaving(true);
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryForm),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCategoriesList(data.categories);
+        setCategoryModalOpen(false);
+        showNotification(
+          'success',
+          editingCategory
+            ? `Category "${categoryForm.name}" updated successfully!`
+            : `Category "${categoryForm.name}" added successfully!`
+        );
+      } else {
+        showNotification('error', data.error || 'Failed to save category');
+      }
+    } catch (err) {
+      showNotification('error', 'Network error saving category');
+    } finally {
+      setCategorySaving(false);
+    }
+  };
+
+  const handleDeleteCategory = async (cat) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${cat.name}"? Products in this category will keep their label, but this category will be removed from store filters.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/categories?slug=${encodeURIComponent(cat.slug || cat.id)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCategoriesList(data.categories);
+        showNotification('success', `Category "${cat.name}" removed successfully.`);
+      } else {
+        showNotification('error', data.error || 'Failed to remove category');
+      }
+    } catch (err) {
+      showNotification('error', 'Network error deleting category');
+    }
   };
 
   // Login handler
@@ -525,6 +640,14 @@ export default function AdminConsolePage() {
         </button>
 
         <button
+          className={`${styles.navTab} ${activeTab === 'categories' ? styles.navTabActive : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          <Tag size={16} />
+          <span>Categories ({categoriesList.length})</span>
+        </button>
+
+        <button
           className={`${styles.navTab} ${activeTab === 'promo' ? styles.navTabActive : ''}`}
           onClick={() => setActiveTab('promo')}
         >
@@ -684,6 +807,95 @@ export default function AdminConsolePage() {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ===================== TAB: CATEGORIES ===================== */}
+        {activeTab === 'categories' && (
+          <div>
+            <div className={styles.tabHeader}>
+              <div>
+                <h2 className={styles.tabTitle}>Category Management</h2>
+                <p className={styles.tabSubtitle}>
+                  Create, edit, and organize store collections. Real-time changes appear immediately across the live store.
+                </p>
+              </div>
+              <button
+                onClick={() => openCategoryModal()}
+                className={styles.primaryActionBtn}
+              >
+                <Plus size={16} />
+                <span>Add New Category</span>
+              </button>
+            </div>
+
+            {categoriesLoading ? (
+              <div className={styles.loadingBox}>
+                <RefreshCw size={24} className={styles.spinning} />
+                <p>Loading categories...</p>
+              </div>
+            ) : categoriesList.length === 0 ? (
+              <div className={styles.emptyState}>
+                <Tag size={40} color="#79A36E" style={{ marginBottom: '1rem' }} />
+                <h3>No Categories Found</h3>
+                <p>Add your first product category to organize your store inventory.</p>
+                <button
+                  onClick={() => openCategoryModal()}
+                  className={styles.primaryActionBtn}
+                  style={{ marginTop: '1rem' }}
+                >
+                  <Plus size={16} />
+                  <span>Create Category</span>
+                </button>
+              </div>
+            ) : (
+              <div className={styles.categoryCardGrid}>
+                {categoriesList.map((cat) => (
+                  <div key={cat.slug || cat.id} className={styles.categoryCard}>
+                    <div className={styles.categoryCardBanner}>
+                      <img
+                        src={cat.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=700&fit=crop'}
+                        alt={cat.name}
+                        className={styles.categoryCardImg}
+                      />
+                      {cat.badge && (
+                        <span className={styles.categoryBadgeTag}>{cat.badge}</span>
+                      )}
+                    </div>
+                    <div className={styles.categoryCardBody}>
+                      <div className={styles.categoryCardHeader}>
+                        <h3 className={styles.categoryCardTitle}>{cat.name}</h3>
+                        <span className={styles.categoryCardSlug}>/{cat.slug || cat.id}</span>
+                      </div>
+                      <p className={styles.categoryCardTagline}>
+                        {cat.tagline || 'Pure Organic Collection'}
+                      </p>
+                      <div className={styles.categoryCardFooter}>
+                        <span className={styles.categoryProductCount}>
+                          {cat.count !== undefined ? `${cat.count} Products` : 'Active Collection'}
+                        </span>
+                        <div className={styles.categoryActions}>
+                          <button
+                            onClick={() => openCategoryModal(cat)}
+                            className={styles.iconBtn}
+                            title="Edit Category"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(cat)}
+                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                            title="Remove Category"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1287,12 +1499,11 @@ export default function AdminConsolePage() {
                     value={productForm.category}
                     onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   >
-                    <option value="skincare">Skincare</option>
-                    <option value="superfoods">Superfoods</option>
-                    <option value="wellness">Wellness</option>
-                    <option value="home">Home & Living</option>
-                    <option value="haircare">Hair Care</option>
-                    <option value="essentials">Essential Oils</option>
+                    {(categoriesList.length > 0 ? categoriesList : fallbackCategories).map((cat) => (
+                      <option key={cat.slug || cat.id} value={cat.slug || cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1506,6 +1717,141 @@ export default function AdminConsolePage() {
                 </button>
                 <button type="submit" className={styles.primaryActionBtn} style={{ padding: '0.75rem 1.75rem' }}>
                   <Save size={16} /> Save Product
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Category Modal (Add / Edit) */}
+      {categoryModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setCategoryModalOpen(false)}>
+          <div className={styles.modalCard} style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                {editingCategory ? `Edit Category: ${editingCategory.name}` : 'Add New Category'}
+              </h3>
+              <button onClick={() => setCategoryModalOpen(false)} className={styles.closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCategory}>
+              <div className={styles.formGrid}>
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Category Name *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.formInput}
+                    value={categoryForm.name}
+                    onChange={(e) => {
+                      const newName = e.target.value;
+                      setCategoryForm({
+                        ...categoryForm,
+                        name: newName,
+                        slug: !editingCategory
+                          ? newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                          : categoryForm.slug,
+                      });
+                    }}
+                    placeholder="e.g. Herbal Teas, Bath & Body, Essential Oils"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>URL Slug *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.formInput}
+                    value={categoryForm.slug}
+                    onChange={(e) =>
+                      setCategoryForm({
+                        ...categoryForm,
+                        slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ''),
+                      })
+                    }
+                    placeholder="e.g. herbal-teas"
+                  />
+                  <small style={{ color: '#8C9988', fontSize: '0.75rem', marginTop: '4px' }}>
+                    Store filter path: /shop?category={categoryForm.slug || 'slug'}
+                  </small>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Badge Tag</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    value={categoryForm.badge}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, badge: e.target.value })}
+                    placeholder="e.g. 6 Formulas, Fresh Harvest"
+                  />
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Tagline / Pitch</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    value={categoryForm.tagline}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, tagline: e.target.value })}
+                    placeholder="e.g. Nourish & Glow, Daily Rituals"
+                  />
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Cover Image URL</label>
+                  <input
+                    type="url"
+                    className={styles.formInput}
+                    value={categoryForm.image}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/photo-..."
+                  />
+                  {categoryForm.image && (
+                    <div
+                      style={{
+                        marginTop: '0.75rem',
+                        height: '130px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      }}
+                    >
+                      <img
+                        src={categoryForm.image}
+                        alt="Preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setCategoryModalOpen(false)}
+                  className={styles.iconBtn}
+                  style={{ padding: '0.75rem 1.5rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={categorySaving}
+                  className={styles.primaryActionBtn}
+                  style={{ padding: '0.75rem 1.75rem' }}
+                >
+                  <Save size={16} />{' '}
+                  {categorySaving
+                    ? 'Saving...'
+                    : editingCategory
+                    ? 'Update Category'
+                    : 'Create Category'}
                 </button>
               </div>
             </form>
