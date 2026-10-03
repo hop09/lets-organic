@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Lock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { Lock, ShieldCheck, ArrowLeft, Loader2, Tag, X, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
 import styles from './checkout.module.css';
@@ -14,6 +14,10 @@ export default function CheckoutPage() {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const errorRef = useRef(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -52,71 +56,55 @@ export default function CheckoutPage() {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    if (serverError) setServerError('');
+  };
+
+  const applyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    setAppliedCoupon(code);
+    setCouponInput('');
+    if (serverError) setServerError('');
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon('');
+    if (serverError) setServerError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-
-    // Build order details
-    const orderDetails = items.map(item =>
-      `${item.name} x${item.quantity} — PKR ${(item.price * item.quantity).toLocaleString()}`
-    ).join('\n');
-
-    const orderSummary = `
-ORDER DETAILS
-========================
-${orderDetails}
-========================
-Subtotal: PKR ${totalPrice.toLocaleString()}
-Delivery Fee: ${shipping === 0 ? 'FREE' : `PKR ${shipping.toLocaleString()}`}
-TOTAL: PKR ${total.toLocaleString()}
-
-CUSTOMER INFO
-========================
-Name: ${formData.fullName}
-Email: ${formData.email}
-Phone: ${formData.phone}
-Address: ${formData.address}
-City: ${formData.city}
-State: ${formData.state}
-ZIP: ${formData.zip}
-Country: ${formData.country}
-Notes: ${formData.notes || 'None'}
-    `.trim();
+    setServerError('');
 
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          access_key: '2b3a1b7b-98cc-443e-996d-70b4c1965cbb', // Replace with your W3Forms access key
-          subject: `New Order from ${formData.fullName} — Lets Organic`,
-          from_name: 'Lets Organic Store',
-          name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          message: orderSummary,
+          items: items.map(i => ({ slug: i.slug || i.id, quantity: i.quantity })),
+          customer: formData,
+          couponCode: appliedCoupon || undefined,
         }),
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         clearCart();
-        router.push('/thank-you');
+        router.push('/thank-you?order=' + encodeURIComponent(data.orderNumber));
       } else {
-        // Still redirect on demo
-        clearCart();
-        router.push('/thank-you');
+        // Keep the cart intact so the customer can fix the problem and retry
+        setServerError(data.error || 'Could not place your order. Please try again.');
+        setLoading(false);
+        errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } catch (error) {
-      // For demo, still redirect
-      clearCart();
-      router.push('/thank-you');
-    } finally {
+      // Network failure — keep the cart intact
+      setServerError('Network error. Please check your connection and try again.');
       setLoading(false);
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -141,7 +129,14 @@ Notes: ${formData.notes || 'None'}
 
         <div className={styles.checkoutLayout}>
           {/* Form */}
-          <form className={styles.form} onSubmit={handleSubmit}>
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            {serverError && (
+              <div ref={errorRef} className={styles.errorBanner} role="alert">
+                <AlertTriangle size={20} />
+                <span>{serverError}</span>
+              </div>
+            )}
+
             <div className={styles.formSection}>
               <h3 className={styles.formSectionTitle}>Contact Information</h3>
               <div className={styles.fieldRow}>
@@ -277,7 +272,7 @@ Notes: ${formData.notes || 'None'}
               disabled={loading}
             >
               {loading ? (
-                <><Loader2 size={18} className={styles.spinner} /> Processing...</>
+                <><Loader2 size={18} className={styles.spinner} /> Placing your order...</>
               ) : (
                 <><Lock size={18} /> Place Order — PKR {total.toLocaleString()}</>
               )}
@@ -285,7 +280,7 @@ Notes: ${formData.notes || 'None'}
 
             <div className={styles.securityNote}>
               <ShieldCheck size={16} />
-              <span>Cash on Delivery & Secure Online Payment Available</span>
+              <span>Cash on Delivery — pay when your order arrives</span>
             </div>
           </form>
 
@@ -307,10 +302,51 @@ Notes: ${formData.notes || 'None'}
               ))}
             </div>
             <div className={styles.summaryDivider} />
+
+            {/* Coupon */}
+            <div className={styles.couponBox}>
+              {appliedCoupon ? (
+                <div className={styles.couponChip}>
+                  <Tag size={14} />
+                  <span>{appliedCoupon}</span>
+                  <button type="button" onClick={removeCoupon} className={styles.couponRemove} aria-label="Remove coupon">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.couponInputRow}>
+                  <input
+                    type="text"
+                    className="input"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } }}
+                    placeholder="Coupon code"
+                    aria-label="Coupon code"
+                  />
+                  <button type="button" onClick={applyCoupon} className="btn btn-secondary">
+                    Apply
+                  </button>
+                </div>
+              )}
+              <p className={styles.couponHint}>
+                {appliedCoupon
+                  ? 'Your coupon will be validated when you place the order.'
+                  : 'Have a coupon? Enter it above — it will be validated at checkout.'}
+              </p>
+            </div>
+
+            <div className={styles.summaryDivider} />
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
               <span>PKR {totalPrice.toLocaleString()}</span>
             </div>
+            {appliedCoupon && (
+              <div className={styles.summaryRow}>
+                <span>Discount ({appliedCoupon})</span>
+                <span>Applied at order time</span>
+              </div>
+            )}
             <div className={styles.summaryRow}>
               <span>Delivery Fee</span>
               <span>{shipping === 0 ? 'FREE' : `PKR ${shipping.toLocaleString()}`}</span>

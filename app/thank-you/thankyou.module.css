@@ -99,6 +99,38 @@
   animation-delay: 0.5s;
 }
 
+/* Order Number */
+.orderNumberBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  background: var(--bg-card);
+  border: 2px dashed var(--primary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  color: var(--primary);
+  animation: fadeInUp 0.5s ease both;
+  animation-delay: 0.55s;
+}
+
+.orderNumberLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.orderNumberValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  text-align: left;
+}
+
 /* Message Box */
 .messageBox {
   display: flex;

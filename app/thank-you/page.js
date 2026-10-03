@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, ShoppingBag, ArrowRight, Leaf, Heart } from 'lucide-react';
+import { CheckCircle, ShoppingBag, ArrowRight, Leaf, Heart, Package } from 'lucide-react';
 import styles from './thankyou.module.css';
 
 const confettiColors = ['#5B7553', '#C8956C', '#E8F0E5', '#F5E6D8', '#3F5238', '#A87450', '#E8A634'];
@@ -21,7 +22,9 @@ function ConfettiPiece({ index }) {
   return <div className={styles.confettiPiece} style={style} />;
 }
 
-export default function ThankYouPage() {
+function ThankYouContent() {
+  const searchParams = useSearchParams();
+  const orderNumber = searchParams.get('order');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -52,13 +55,23 @@ export default function ThankYouPage() {
         <h1 className={styles.title}>Thank You!</h1>
         <p className={styles.subtitle}>Your order has been placed successfully</p>
 
+        {orderNumber && (
+          <div className={styles.orderNumberBox}>
+            <Package size={20} />
+            <div>
+              <p className={styles.orderNumberLabel}>Your order number</p>
+              <p className={styles.orderNumberValue}>{orderNumber}</p>
+            </div>
+          </div>
+        )}
+
         <div className={styles.messageBox}>
           <Leaf size={20} className={styles.messageIcon} />
           <div>
-            <p className={styles.messageTitle}>Order Confirmed</p>
+            <p className={styles.messageTitle}>Order Received — Cash on Delivery</p>
             <p className={styles.messageText}>
-              We&apos;ve received your order and will start preparing it right away.
-              You&apos;ll receive a confirmation email shortly with your order details and tracking information.
+              We&apos;ve received your order. We&apos;ll call you shortly to confirm it before dispatch.
+              Please keep your phone nearby and have the exact amount ready when your order arrives.
             </p>
           </div>
         </div>
@@ -70,6 +83,7 @@ export default function ThankYouPage() {
 
         <div className={styles.actions}>
           <Link href="/shop" className="btn btn-primary btn-lg">
+            <ShoppingBag size={18} />
             Continue Shopping
             <ArrowRight size={18} />
           </Link>
@@ -79,5 +93,22 @@ export default function ThankYouPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ThankYouPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.thankYouPage}>
+          <div className={styles.content}>
+            <h1 className={styles.title}>Thank You!</h1>
+            <p className={styles.subtitle}>Loading your order confirmation...</p>
+          </div>
+        </div>
+      }
+    >
+      <ThankYouContent />
+    </Suspense>
   );
 }

@@ -176,6 +176,77 @@
   padding-top: var(--space-md);
 }
 
+/* Error banner (server-side failures) */
+.errorBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  background: rgba(200, 60, 60, 0.12);
+  border: 1px solid rgba(200, 60, 60, 0.45);
+  color: #e0685f;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.errorBanner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Coupon */
+.couponBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.couponInputRow {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.couponInputRow .input {
+  flex: 1;
+  text-transform: uppercase;
+}
+
+.couponChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  align-self: flex-start;
+  background: rgba(91, 117, 83, 0.15);
+  border: 1px dashed var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.couponRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.couponRemove:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.couponHint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 /* Empty */
 .emptyCheckout {
   display: flex;
