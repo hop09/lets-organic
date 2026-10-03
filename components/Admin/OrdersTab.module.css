@@ -1,0 +1,740 @@
+/* ==========================================================================
+   Orders Management Tab — dark console theme matching the admin module
+   ========================================================================== */
+
+.tabHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tabTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+}
+
+.tabSubtitle {
+  color: #8c9988;
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.primaryActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #79a36e;
+  color: #0e120d;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.primaryActionBtn:hover:not(:disabled) {
+  background: #8ab97f;
+}
+
+.primaryActionBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ghostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b5c2b1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ghostBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b5c2b1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.iconBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.iconBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ------------------------------- Filters ------------------------------- */
+
+.filtersRow {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterSelect,
+.filterInput {
+  background: #1c241d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.filterSelect:focus,
+.filterInput:focus {
+  border-color: #79a36e;
+}
+
+.filterInput::placeholder {
+  color: #6d7a6a;
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchWrap .filterInput {
+  padding-left: 2.1rem;
+  min-width: 240px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.7rem;
+  color: #6d7a6a;
+  pointer-events: none;
+}
+
+.dateWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dateWrap .filterInput {
+  padding-left: 2.1rem;
+}
+
+.dateWrap .searchIcon {
+  position: absolute;
+}
+
+.dateWrap .filterInput {
+  position: relative;
+  padding-left: 2.1rem;
+}
+
+.dateSep {
+  color: #8c9988;
+  font-size: 0.85rem;
+}
+
+/* -------------------------------- Table -------------------------------- */
+
+.tableCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.5rem 1rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dataTable th {
+  text-align: left;
+  color: #8c9988;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  padding: 0.75rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.dataTable td {
+  padding: 0.9rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+  color: #e8ede6;
+}
+
+.dataTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dataTable tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.emptyState {
+  text-align: center;
+  color: #8c9988;
+  padding: 2rem 1rem !important;
+}
+
+.orderLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  color: #79a36e;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.orderLink:hover {
+  text-decoration: underline;
+}
+
+.dateCell {
+  font-size: 0.8rem;
+  color: #8c9988;
+  white-space: nowrap;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.customerSub {
+  font-size: 0.75rem;
+  color: #8c9988;
+}
+
+.totalCell {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.quickSelect {
+  background: #1c241d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.quickSelect:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------------------------- Status badges ---------------------------- */
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.statusPending {
+  color: #e5b288;
+  background: rgba(200, 149, 108, 0.2);
+}
+
+.statusConfirmed {
+  color: #8bb8e5;
+  background: rgba(139, 184, 229, 0.18);
+}
+
+.statusShipped {
+  color: #c9a9e5;
+  background: rgba(201, 169, 229, 0.18);
+}
+
+.statusDelivered {
+  color: #75e089;
+  background: rgba(40, 167, 69, 0.15);
+}
+
+.statusCancelled {
+  color: #ff808a;
+  background: rgba(255, 107, 122, 0.15);
+}
+
+.statusDefault {
+  color: #b5c2b1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------------ Pagination ----------------------------- */
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pageInfo {
+  color: #8c9988;
+  font-size: 0.85rem;
+}
+
+.pageBtns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* -------------------------------- Modal -------------------------------- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.modalCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 720px;
+  color: #e8ede6;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.modalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.closeBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #b5c2b1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.placedAt {
+  font-size: 0.8rem;
+  color: #8c9988;
+  margin-left: auto;
+}
+
+.readOnlyHint {
+  font-size: 0.78rem;
+  color: #8c9988;
+  font-style: italic;
+}
+
+.muted {
+  font-size: 0.8rem;
+  color: #8c9988;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.6rem;
+}
+
+.inlineMsg {
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.inlineSuccess {
+  background: rgba(40, 167, 69, 0.15);
+  color: #75e089;
+  border: 1px solid rgba(40, 167, 69, 0.35);
+}
+
+.inlineError {
+  background: rgba(255, 107, 122, 0.12);
+  color: #ff808a;
+  border: 1px solid rgba(255, 107, 122, 0.35);
+}
+
+/* Items */
+
+.itemsList {
+  margin-bottom: 1.5rem;
+}
+
+.itemRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.itemThumb {
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.itemMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.itemLineTotal {
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* Totals */
+
+.totalsBox {
+  margin-bottom: 1.5rem;
+  max-width: 340px;
+  margin-left: auto;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #b5c2b1;
+}
+
+.grandTotalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #ffffff;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.25rem;
+}
+
+.paymentLine {
+  font-size: 0.75rem;
+  color: #8c9988;
+  text-align: right;
+}
+
+/* Customer card */
+
+.customerCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.customerNameStrong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.customerNote {
+  color: #e5b288;
+}
+
+.addrGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .addrGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.addrField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.addrLabel {
+  font-size: 0.72rem;
+  color: #8c9988;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.addrField .filterInput:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+/* Timeline */
+
+.timeline {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.timelineItem:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.timelineDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.timelineBody {
+  font-size: 0.88rem;
+  color: #e8ede6;
+}
+
+.timelineStatus {
+  font-weight: 700;
+  text-transform: capitalize;
+  color: #ffffff;
+}
+
+/* Admin notes */
+
+.notesArea {
+  width: 100%;
+  background: #1c241d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.notesArea:focus {
+  border-color: #79a36e;
+}
+
+/* ============================ Print invoice ============================ */
+
+.invoiceSheet {
+  display: none;
+}
+
+@media print {
+  /* Hide the whole app, then reveal only the invoice sheet. */
+  body * {
+    visibility: hidden;
+  }
+
+  .invoiceSheet,
+  .invoiceSheet * {
+    visibility: visible;
+  }
+
+  .invoiceSheet {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff !important;
+    color: #111111;
+    padding: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    z-index: 99999;
+  }
+
+  .invoiceStore {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .invoiceSub {
+    font-size: 15px;
+    color: #555555;
+    margin-bottom: 20px;
+  }
+
+  .invoiceMeta {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .invoiceTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+
+  .invoiceTable th,
+  .invoiceTable td {
+    border: 1px solid #cccccc;
+    padding: 8px 10px;
+    text-align: left;
+  }
+
+  .invoiceTable th {
+    background: #f2f2f2;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .invoiceTable td:nth-child(2),
+  .invoiceTable td:nth-child(3),
+  .invoiceTable td:nth-child(4) {
+    text-align: right;
+  }
+
+  .invoiceTotals {
+    width: 280px;
+    margin-left: auto;
+    margin-bottom: 24px;
+  }
+
+  .invoiceTotals > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+
+  .invoiceGrandTotal {
+    font-weight: 800;
+    font-size: 16px;
+    border-top: 2px solid #111111;
+    margin-top: 6px;
+    padding-top: 6px !important;
+  }
+
+  .invoiceFoot {
+    text-align: center;
+    color: #555555;
+    font-size: 12px;
+    border-top: 1px solid #dddddd;
+    padding-top: 12px;
+  }
+}

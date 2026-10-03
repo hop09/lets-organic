@@ -295,6 +295,7 @@ export async function POST(request) {
           couponCode: input.couponCode && discount > 0 ? input.couponCode : '',
           paymentMethod: 'COD',
           status: 'pending',
+          statusHistory: [{ status: 'pending', at: new Date(), by: 'system' }],
         });
       } catch (err) {
         if (err?.code === 11000) {
@@ -336,12 +337,45 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    const search = (searchParams.get('search') || '').trim();
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10) || 20));
 
     const query = {};
     if (status && ORDER_STATUSES.includes(status)) {
       query.status = status;
+    }
+    if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(escaped, 'i');
+      query.$or = [
+        { orderNumber: re },
+        { 'customer.fullName': re },
+        { 'customer.phone': re },
+        { 'customer.email': re },
+      ];
+    }
+    if (from || to) {
+      const createdAt = {};
+      if (from) {
+        const fromDate = new Date(from);
+        if (!Number.isNaN(fromDate.getTime())) {
+          createdAt.$gte = fromDate;
+        }
+      }
+      if (to) {
+        const toDate = new Date(to);
+        if (!Number.isNaN(toDate.getTime())) {
+          // Inclusive through the end of the day
+          toDate.setUTCDate(toDate.getUTCDate() + 1);
+          createdAt.$lt = toDate;
+        }
+      }
+      if (Object.keys(createdAt).length > 0) {
+        query.createdAt = createdAt;
+      }
     }
 
     const [orders, total] = await Promise.all([

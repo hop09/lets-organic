@@ -52,6 +52,26 @@ const CustomerSchema = new mongoose.Schema(
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
+const StatusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ORDER_STATUSES,
+      required: true,
+    },
+    at: {
+      type: Date,
+      default: Date.now,
+    },
+    by: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const OrderSchema = new mongoose.Schema(
   {
     orderNumber: {
@@ -107,6 +127,16 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ORDER_STATUSES,
       default: 'pending',
+    },
+    statusHistory: {
+      type: [StatusHistorySchema],
+      default: [],
+    },
+    adminNotes: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: 2000,
     },
   },
   {

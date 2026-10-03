@@ -39,6 +39,7 @@ import { categories as fallbackCategories } from '@/data/products';
 import SafeImage from '@/components/SafeImage/SafeImage';
 import ImageUploader from '@/components/ImageUploader/ImageUploader';
 import TeamTab from '@/components/Admin/TeamTab';
+import OrdersTab from '@/components/Admin/OrdersTab';
 import { hasPermission } from '@/lib/permissionsClient';
 import styles from './admin.module.css';
 
@@ -53,25 +54,6 @@ const TAB_PERMISSIONS = {
   messages: 'feedback.moderate',
   settings: 'settings.manage',
   team: 'users.manage',
-};
-
-const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
-
-const orderStatusStyle = (status) => {
-  switch (status) {
-    case 'pending':
-      return { color: '#E5B288', background: 'rgba(200,149,108,0.2)' };
-    case 'confirmed':
-      return { color: '#8BB8E5', background: 'rgba(139,184,229,0.18)' };
-    case 'shipped':
-      return { color: '#C9A9E5', background: 'rgba(201,169,229,0.18)' };
-    case 'delivered':
-      return { color: '#75E089', background: 'rgba(40,167,69,0.15)' };
-    case 'cancelled':
-      return { color: '#FF808A', background: 'rgba(255,107,122,0.15)' };
-    default:
-      return { color: '#B5C2B1', background: 'rgba(255,255,255,0.08)' };
-  }
 };
 
 export default function AdminConsolePage() {
@@ -99,16 +81,8 @@ export default function AdminConsolePage() {
   const [messagesFilter, setMessagesFilter] = useState('all'); // 'all' | 'unread' | 'read'
   const [expandedMessageId, setExpandedMessageId] = useState(null);
 
-  // Orders state
-  const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [orderStatusFilter, setOrderStatusFilter] = useState('all'); // 'all' | ORDER_STATUSES
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [ordersLimit] = useState(20);
-  const [ordersTotal, setOrdersTotal] = useState(0);
+  // Orders badge state (the OrdersTab component owns the order list itself)
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [orderStatusUpdating, setOrderStatusUpdating] = useState(false);
   const [settings, setSettings] = useState(null);
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -257,40 +231,7 @@ export default function AdminConsolePage() {
     }
   }, []);
 
-  // Load orders (admin)
-  const fetchOrders = useCallback(async () => {
-    setOrdersLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(ordersPage),
-        limit: String(ordersLimit),
-      });
-      if (orderStatusFilter !== 'all') params.set('status', orderStatusFilter);
-      const res = await fetch(`/api/orders?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setOrders(data.orders || []);
-        setOrdersTotal(data.total || 0);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setOrdersLoading(false);
-    }
-  }, [ordersPage, orderStatusFilter, ordersLimit]);
-
-  // Pending orders count for the tab badge
-  const fetchPendingOrdersCount = useCallback(async () => {
-    try {
-      const res = await fetch('/api/orders?status=pending&limit=1');
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setPendingOrdersCount(data.total || 0);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
+  // (Orders list, filters, and detail modal live in components/Admin/OrdersTab.js)
 
   // Load settings
   const fetchSettings = useCallback(async () => {
@@ -334,18 +275,6 @@ export default function AdminConsolePage() {
       })();
     }
   }, [isAuthenticated, fetchProducts, fetchFeedback, fetchMessages, fetchSettings, fetchCategories]);
-
-  // Load orders when the orders tab is opened (also on page/filter changes)
-  useEffect(() => {
-    if (isAuthenticated && activeTab === 'orders') {
-      // Async IIFE: state updates happen in the fetch continuations (after await),
-      // not synchronously in the effect body. Promise.all preserves the original
-      // concurrent firing of the independent fetches.
-      (async () => {
-        await Promise.all([fetchOrders(), fetchPendingOrdersCount()]);
-      })();
-    }
-  }, [isAuthenticated, activeTab, fetchOrders, fetchPendingOrdersCount]);
 
   // Load coupons when the coupons tab is opened
   useEffect(() => {
@@ -829,30 +758,6 @@ export default function AdminConsolePage() {
   };
 
   // Update order status
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    setOrderStatusUpdating(true);
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setOrders((prev) => prev.map((o) => (o._id === orderId ? data.order : o)));
-        setSelectedOrder(data.order);
-        fetchPendingOrdersCount();
-        showNotification('success', `Order ${data.order.orderNumber} marked as ${newStatus}.`);
-      } else {
-        showNotification('error', data.error || 'Failed to update order status');
-      }
-    } catch (e) {
-      showNotification('error', 'Network error updating order status');
-    } finally {
-      setOrderStatusUpdating(false);
-    }
-  };
-
   // Save Settings
   const handleSaveSettings = async (e) => {
     e.preventDefault();
@@ -1275,151 +1180,11 @@ export default function AdminConsolePage() {
 
         {/* ===================== TAB: ORDERS ===================== */}
         {activeTab === 'orders' && (
-          <div>
-            <div className={styles.tabHeader}>
-              <div>
-                <h2 className={styles.tabTitle}>Order Management</h2>
-                <p className={styles.tabSubtitle}>Review customer orders, update fulfillment status, and track deliveries. Click an order number for full details.</p>
-              </div>
-              <button
-                onClick={() => { fetchOrders(); fetchPendingOrdersCount(); }}
-                className={styles.primaryActionBtn}
-              >
-                <RefreshCw size={16} />
-                <span>Refresh</span>
-              </button>
-            </div>
-
-            {/* Status filter */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => { setOrderStatusFilter('all'); setOrdersPage(1); }}
-                className={`${styles.iconBtn} ${orderStatusFilter === 'all' ? styles.navTabActive : ''}`}
-                style={{ padding: '0.5rem 1rem' }}
-              >
-                All
-              </button>
-              {ORDER_STATUSES.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => { setOrderStatusFilter(s); setOrdersPage(1); }}
-                  className={`${styles.iconBtn} ${orderStatusFilter === s ? styles.navTabActive : ''}`}
-                  style={{ padding: '0.5rem 1rem', textTransform: 'capitalize' }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-
-            <div className={styles.tableCard}>
-              <div className={styles.tableWrapper}>
-                <table className={styles.dataTable}>
-                  <thead>
-                    <tr>
-                      <th>Order #</th>
-                      <th>Date</th>
-                      <th>Customer</th>
-                      <th>Items</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className={styles.emptyState}>
-                          {ordersLoading ? 'Loading orders...' : 'No orders found for this filter.'}
-                        </td>
-                      </tr>
-                    ) : (
-                      orders.map((order) => (
-                        <tr key={order._id}>
-                          <td>
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, color: '#79A36E', fontSize: '0.9rem', padding: 0 }}
-                              title="View order details"
-                            >
-                              {order.orderNumber}
-                            </button>
-                          </td>
-                          <td style={{ fontSize: '0.8rem', color: '#8C9988', whiteSpace: 'nowrap' }}>
-                            {new Date(order.createdAt).toLocaleString()}
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{order.customer?.fullName}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#8C9988' }}>{order.customer?.phone}</div>
-                          </td>
-                          <td>
-                            {(order.items || []).reduce((sum, i) => sum + i.quantity, 0)} pcs
-                            <span style={{ color: '#8C9988', fontSize: '0.75rem' }}> ({(order.items || []).length} lines)</span>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 700 }}>PKR {order.total?.toLocaleString()}</div>
-                            {order.paymentMethod && (
-                              <div style={{ fontSize: '0.72rem', color: '#8C9988' }}>{order.paymentMethod}</div>
-                            )}
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                ...orderStatusStyle(order.status),
-                                padding: '0.25rem 0.6rem',
-                                borderRadius: 4,
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                textTransform: 'capitalize',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {order.status}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              className={styles.iconBtn}
-                              title="View order details"
-                            >
-                              <ExternalLink size={15} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Pagination */}
-            {ordersTotal > ordersLimit && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                <span style={{ color: '#8C9988', fontSize: '0.85rem' }}>
-                  Page {ordersPage} of {Math.max(1, Math.ceil(ordersTotal / ordersLimit))} — {ordersTotal} orders
-                </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    className={styles.iconBtn}
-                    style={{ padding: '0.5rem 1rem' }}
-                    disabled={ordersPage <= 1}
-                    onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
-                  >
-                    ‹ Prev
-                  </button>
-                  <button
-                    className={styles.iconBtn}
-                    style={{ padding: '0.5rem 1rem' }}
-                    disabled={ordersPage >= Math.ceil(ordersTotal / ordersLimit)}
-                    onClick={() => setOrdersPage((p) => p + 1)}
-                  >
-                    Next ›
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <OrdersTab
+            adminUser={adminUser}
+            notify={showNotification}
+            onPendingCount={setPendingOrdersCount}
+          />
         )}
 
         {/* ===================== TAB: CATEGORIES ===================== */}
@@ -2860,130 +2625,6 @@ export default function AdminConsolePage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
-          <div className={styles.modalCard} style={{ maxWidth: '720px' }} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Order {selectedOrder.orderNumber}</h3>
-              <button onClick={() => setSelectedOrder(null)} className={styles.closeBtn}>
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Status row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  ...orderStatusStyle(selectedOrder.status),
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: 4,
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  textTransform: 'capitalize',
-                }}
-              >
-                {selectedOrder.status}
-              </span>
-              <select
-                className={styles.formInput}
-                style={{ maxWidth: '200px' }}
-                value={selectedOrder.status}
-                disabled={orderStatusUpdating}
-                onChange={(e) => handleUpdateOrderStatus(selectedOrder._id, e.target.value)}
-                aria-label="Update order status"
-              >
-                {ORDER_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </option>
-                ))}
-              </select>
-              {orderStatusUpdating && <span style={{ fontSize: '0.8rem', color: '#8C9988' }}>Updating...</span>}
-              <span style={{ fontSize: '0.8rem', color: '#8C9988', marginLeft: 'auto' }}>
-                Placed {new Date(selectedOrder.createdAt).toLocaleString()}
-              </span>
-            </div>
-
-            {/* Line items */}
-            <h4 style={{ color: '#FFFFFF', marginBottom: '0.5rem' }}>Items</h4>
-            <div style={{ marginBottom: '1.5rem' }}>
-              {(selectedOrder.items || []).map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    alignItems: 'center',
-                    padding: '0.6rem 0',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                >
-                  <SafeImage
-                    src={item.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&h=100&fit=crop'}
-                    alt={item.name}
-                    className={styles.productThumb}
-                    width={48}
-                    height={48}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600 }}>{item.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#8C9988' }}>
-                      PKR {item.price?.toLocaleString()} × {item.quantity}
-                      {item.slug && <span> · /{item.slug}</span>}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
-                    PKR {(item.price * item.quantity).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Totals */}
-            <div style={{ marginBottom: '1.5rem', maxWidth: '320px', marginLeft: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', fontSize: '0.9rem', color: '#B5C2B1' }}>
-                <span>Subtotal</span>
-                <span>PKR {selectedOrder.subtotal?.toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', fontSize: '0.9rem', color: '#B5C2B1' }}>
-                <span>Discount{selectedOrder.couponCode ? ` (${selectedOrder.couponCode})` : ''}</span>
-                <span>− PKR {selectedOrder.discount?.toLocaleString()}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', fontSize: '0.9rem', color: '#B5C2B1' }}>
-                <span>Delivery Fee</span>
-                <span>{selectedOrder.shipping === 0 ? 'FREE' : `PKR ${selectedOrder.shipping?.toLocaleString()}`}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 800, fontSize: '1.05rem', color: '#FFFFFF', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '0.25rem' }}>
-                <span>Total</span>
-                <span>PKR {selectedOrder.total?.toLocaleString()}</span>
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#8C9988', textAlign: 'right' }}>
-                Payment: {selectedOrder.paymentMethod || 'COD'}
-              </div>
-            </div>
-
-            {/* Customer */}
-            <h4 style={{ color: '#FFFFFF', marginBottom: '0.5rem' }}>Customer & Delivery</h4>
-            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '1rem', fontSize: '0.9rem', lineHeight: 1.8 }}>
-              <div><strong style={{ color: '#FFFFFF' }}>{selectedOrder.customer?.fullName}</strong></div>
-              <div style={{ color: '#B5C2B1' }}>{selectedOrder.customer?.phone} · {selectedOrder.customer?.email}</div>
-              <div style={{ color: '#B5C2B1', marginTop: '0.5rem' }}>
-                {selectedOrder.customer?.address}<br />
-                {selectedOrder.customer?.city}
-                {selectedOrder.customer?.state ? `, ${selectedOrder.customer.state}` : ''} {selectedOrder.customer?.zip}<br />
-                {selectedOrder.customer?.country}
-              </div>
-              {selectedOrder.customer?.notes && (
-                <div style={{ color: '#E5B288', marginTop: '0.5rem' }}>
-                  <strong>Notes:</strong> {selectedOrder.customer.notes}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
