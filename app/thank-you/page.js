@@ -89,10 +89,16 @@ function ThankYouContent() {
         </div>
 
         <div className={styles.actions}>
-          <Link href="/shop" className="btn btn-primary btn-lg">
+          {orderNumber && (
+            <Link href="/track" className="btn btn-primary btn-lg">
+              <Package size={18} />
+              Track Your Order
+              <ArrowRight size={18} />
+            </Link>
+          )}
+          <Link href="/shop" className="btn btn-secondary btn-lg">
             <ShoppingBag size={18} />
             Continue Shopping
-            <ArrowRight size={18} />
           </Link>
           <Link href="/" className="btn btn-secondary btn-lg">
             Back to Home

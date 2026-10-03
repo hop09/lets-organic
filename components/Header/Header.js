@@ -28,6 +28,7 @@ const navLinks = [
   { label: 'Categories', href: '/shop', hasDropdown: true },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Track Order', href: '/track' },
 ];
 
 const categoryLinks = [

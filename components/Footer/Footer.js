@@ -117,6 +117,7 @@ export default function Footer() {
             <div className={styles.footerCol}>
               <h4 className={styles.footerColTitle}>Help</h4>
               <ul className={styles.footerLinks}>
+                <li><Link href="/track">Track Your Order</Link></li>
                 <li><Link href="/contact">Contact Us</Link></li>
                 <li><Link href="/shipping">Shipping Info</Link></li>
                 <li><Link href="/returns">Returns & Refunds</Link></li>
