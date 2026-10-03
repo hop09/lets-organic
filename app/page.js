@@ -13,7 +13,6 @@ import {
   RotateCcw,
   Headphones,
   Leaf,
-  Timer,
   Sparkles,
   ShoppingBag,
   Star,
@@ -34,36 +33,6 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
 import styles from './page.module.css';
 
-const trustBadges = [
-  { icon: Truck, title: 'Free Shipping', desc: 'On orders over $50' },
-  { icon: ShieldCheck, title: 'Organic Certified', desc: '100% certified products' },
-  { icon: RotateCcw, title: 'Easy Returns', desc: '30-day return policy' },
-  { icon: Headphones, title: '24/7 Support', desc: 'Always here to help' },
-];
-
-function useCountdown(targetDate) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-      if (distance < 0) {
-        clearInterval(timer);
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000),
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  return timeLeft;
-}
 
 export default function HomePage() {
   const { addItem } = useCart();
@@ -117,10 +86,6 @@ export default function HomePage() {
     const filtered = productsList.filter(p => p.originalPrice && p.originalPrice > p.price);
     return filtered.length > 0 ? filtered : productsList.slice(2, 6);
   }, [productsList]);
-
-  // Set countdown target to 3 days from now
-  const countdownTarget = useMemo(() => new Date().getTime() + 3 * 24 * 60 * 60 * 1000, []);
-  const countdown = useCountdown(countdownTarget);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -286,7 +251,9 @@ export default function HomePage() {
                   </div>
                   <span className={styles.heroRatingScore}>{heroProduct.rating || 4.9}</span>
                   <span className={styles.heroReviewsCount}>
-                    ({heroProduct.reviews || 128} verified reviews)
+                    {Number(heroProduct.reviews) > 0
+                      ? `(${heroProduct.reviews} customer reviews)`
+                      : 'Be the first to review'}
                   </span>
                 </div>
 
@@ -575,42 +542,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FLASH SALE COUNTDOWN ===== */}
+      {/* ===== ON SALE NOW ===== */}
       <section className={styles.flashSale}>
         <div className="container-wide">
           <div className={styles.flashInner}>
             <div className={styles.flashContent}>
               <span className={styles.flashBadge}>
-                <Timer size={14} />
-                Flash Harvest Sale
+                <Tag size={14} />
+                On Sale Now
               </span>
               <h2 className={styles.flashTitle}>Up to 40% Off Selected Organic Superfoods</h2>
               <p className={styles.flashDesc}>
-                Limited-time harvest deals on our top certified organic supplements and wellness tonics. Don&apos;t miss out.
+                Real savings on our certified organic supplements and wellness tonics — discounted prices you can grab right now.
               </p>
-              <div className={styles.countdown}>
-                <div className={styles.countdownUnit}>
-                  <span className={styles.countdownValue}>{String(countdown.days).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Days</span>
-                </div>
-                <span className={styles.countdownSep}>:</span>
-                <div className={styles.countdownUnit}>
-                  <span className={styles.countdownValue}>{String(countdown.hours).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Hours</span>
-                </div>
-                <span className={styles.countdownSep}>:</span>
-                <div className={styles.countdownUnit}>
-                  <span className={styles.countdownValue}>{String(countdown.minutes).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Mins</span>
-                </div>
-                <span className={styles.countdownSep}>:</span>
-                <div className={styles.countdownUnit}>
-                  <span className={styles.countdownValue}>{String(countdown.seconds).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Secs</span>
-                </div>
-              </div>
               <Link href="/shop" className="btn btn-primary btn-lg">
-                Shop The Flash Sale <ArrowRight size={18} />
+                Shop The Sale <ArrowRight size={18} />
               </Link>
             </div>
             <div className={styles.flashProducts}>

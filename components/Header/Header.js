@@ -19,7 +19,6 @@ import {
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
-import { products } from '@/data/products';
 import styles from './Header.module.css';
 
 const navLinks = [
@@ -51,6 +50,9 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchSearched, setSearchSearched] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchInputRef = useRef(null);
   const pathname = usePathname();
@@ -85,6 +87,37 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  // Live product search against the database (debounced ~300ms, min 2 chars).
+  // All state updates happen inside async callbacks, never synchronously in the effect body.
+  useEffect(() => {
+    const query = searchQuery.trim();
+    const timer = setTimeout(async () => {
+      if (query.length < 2) {
+        setSearchResults([]);
+        setSearchLoading(false);
+        setSearchSearched(false);
+        return;
+      }
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.success && Array.isArray(data.products) ? data.products : []);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.warn('Live search failed:', err);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+        setSearchSearched(true);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Completely hide header on hidden admin console
   if (pathname?.startsWith('/console-gate-4527')) {
     return null;
@@ -111,12 +144,6 @@ export default function Header() {
       }))
     : dynamicDefaultAnnouncements;
 
-  const searchResults = searchQuery.length > 1
-    ? products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
-    : [];
 
   return (
     <>
@@ -230,22 +257,32 @@ export default function Header() {
                 <X size={18} />
               </button>
             </div>
-            {searchResults.length > 0 && (
+            {searchQuery.trim().length >= 2 && (
               <div className={styles.searchResults}>
-                {searchResults.map(p => (
-                  <Link
-                    key={p.id}
-                    href={`/product/${p.slug}`}
-                    className={styles.searchResultItem}
-                    onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
-                  >
-                    <img src={p.images[0]} alt={p.name} className={styles.searchResultImg} />
-                    <div>
-                      <p className={styles.searchResultName}>{p.name}</p>
-                      <span className={styles.searchResultPrice}>PKR {Number(p.price).toLocaleString()}</span>
-                    </div>
-                  </Link>
-                ))}
+                {searchLoading ? (
+                  <p className={styles.searchNoResults}>Searching products…</p>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(p => (
+                    <Link
+                      key={p._id || p.id}
+                      href={`/product/${p.slug}`}
+                      className={styles.searchResultItem}
+                      onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                    >
+                      <img
+                        src={p.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&fit=crop'}
+                        alt={p.name}
+                        className={styles.searchResultImg}
+                      />
+                      <div>
+                        <p className={styles.searchResultName}>{p.name}</p>
+                        <span className={styles.searchResultPrice}>PKR {Number(p.price).toLocaleString()}</span>
+                      </div>
+                    </Link>
+                  ))
+                ) : searchSearched ? (
+                  <p className={styles.searchNoResults}>No products found for “{searchQuery.trim()}”</p>
+                ) : null}
               </div>
             )}
           </div>

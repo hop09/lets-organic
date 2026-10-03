@@ -15,7 +15,7 @@ async function seedInitialProductsIfEmpty() {
       price: p.price,
       originalPrice: p.originalPrice || null,
       images: p.images || [],
-      videos: index === 0 ? ['https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'] : [],
+      videos: [],
       category: p.category,
       tags: p.tags || ['Organic'],
       rating: p.rating || 5.0,

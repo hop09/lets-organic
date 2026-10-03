@@ -23,7 +23,7 @@ import {
   Sparkles,
   AlertCircle,
 } from 'lucide-react';
-import { getProductBySlug, getProductsByCategory, products as staticProducts } from '@/data/products';
+import { getProductBySlug, getProductsByCategory } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -43,6 +43,9 @@ export default function ProductDetailPage({ params }) {
   // Reviews from MongoDB
   const [approvedReviews, setApprovedReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  // Related products from the live catalog
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   // Active media item in carousel (index of combined media: images + videos)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
@@ -109,6 +112,34 @@ export default function ProductDetailPage({ params }) {
     loadFeedback();
   }, [product?.slug]);
 
+  // 3. Related products from the live catalog (same category, excluding current)
+  useEffect(() => {
+    if (!product?.category || !product?.slug) return;
+    let cancelled = false;
+    async function loadRelated() {
+      try {
+        const res = await fetch(`/api/products?category=${encodeURIComponent(product.category)}&limit=8`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.success && Array.isArray(data.products)) {
+            setRelatedProducts(data.products.filter(p => p.slug !== product.slug).slice(0, 4));
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Falling back to static related products:', err);
+      }
+      // Last-resort fallback: static list matches the static product fallback
+      if (!cancelled) {
+        setRelatedProducts(
+          getProductsByCategory(product.category).filter(p => p.slug !== product.slug).slice(0, 4)
+        );
+      }
+    }
+    loadRelated();
+    return () => { cancelled = true; };
+  }, [product?.category, product?.slug]);
+
   // Build combined media list (images first in reordered sequence, then videos)
   const mediaList = useMemo(() => {
     if (!product) return [];
@@ -134,9 +165,6 @@ export default function ProductDetailPage({ params }) {
   if (!product) return null;
 
   const wishlisted = isWishlisted(product._id || product.id || product.slug);
-  const relatedProducts = getProductsByCategory(product.category)
-    .filter(p => p.slug !== product.slug)
-    .slice(0, 4);
 
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
@@ -464,7 +492,9 @@ export default function ProductDetailPage({ params }) {
                       ))}
                     </div>
                     <span className={styles.reviewBigCount}>
-                      Based on {approvedReviews.length} verified customer reviews
+                      {approvedReviews.length > 0
+                        ? `Based on ${approvedReviews.length} customer reviews`
+                        : 'No reviews yet — be the first to review'}
                     </span>
                   </div>
                 </div>
@@ -473,13 +503,13 @@ export default function ProductDetailPage({ params }) {
                   {/* Left Column: Live Approved Reviews */}
                   <div>
                     <h3 style={{ marginBottom: '1.25rem', fontSize: '1.15rem', fontWeight: 700 }}>
-                      What Verified Buyers Are Saying
+                      What Our Customers Are Saying
                     </h3>
 
                     {approvedReviews.length === 0 ? (
                       <div className={styles.reviewItem}>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                          Be the first to leave a verified review for this organic formulation! Fill out the feedback form to share your experience.
+                          Be the first to leave a review for this organic formulation! Fill out the feedback form to share your experience.
                         </p>
                       </div>
                     ) : (
@@ -489,7 +519,6 @@ export default function ProductDetailPage({ params }) {
                             <div className={styles.reviewItemHeader}>
                               <div className={styles.reviewAuthor}>
                                 <span>{rev.userName}</span>
-                                <span className={styles.verifiedBadge}>Verified Buyer</span>
                               </div>
                               <span className={styles.reviewDate}>
                                 {new Date(rev.createdAt).toLocaleDateString()}
