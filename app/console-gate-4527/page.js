@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { categories as fallbackCategories } from '@/data/products';
 import SafeImage from '@/components/SafeImage/SafeImage';
+import ImageUploader from '@/components/ImageUploader/ImageUploader';
 import TeamTab from '@/components/Admin/TeamTab';
 import { hasPermission } from '@/lib/permissionsClient';
 import styles from './admin.module.css';
@@ -158,7 +159,6 @@ export default function AdminConsolePage() {
     stockCount: 50,
     isHero: false,
   });
-  const [newImageUrl, setNewImageUrl] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
 
   // Check auth session
@@ -634,7 +634,6 @@ export default function AdminConsolePage() {
         isHero: false,
       });
     }
-    setNewImageUrl('');
     setNewVideoUrl('');
     setModalOpen(true);
   };
@@ -655,10 +654,10 @@ export default function AdminConsolePage() {
     setProductForm({ ...productForm, images: list });
   };
 
-  const addImage = () => {
-    if (!newImageUrl.trim()) return;
-    setProductForm({ ...productForm, images: [...productForm.images, newImageUrl.trim()] });
-    setNewImageUrl('');
+  // Appends an image URL (from upload or paste) to the product image list.
+  const appendProductImage = (url) => {
+    if (!url || !url.trim()) return;
+    setProductForm({ ...productForm, images: [...productForm.images, url.trim()] });
   };
 
   const addVideo = () => {
@@ -882,6 +881,10 @@ export default function AdminConsolePage() {
       ),
     [adminUser]
   );
+
+  // Upload dropzones are only shown to admins with the media.upload permission
+  // (the /api/upload endpoint enforces this again server-side).
+  const canUpload = !adminUser || hasPermission(adminUser, 'media.upload');
 
   // If the active tab becomes hidden by permissions, fall back to the first visible tab.
   useEffect(() => {
@@ -1750,17 +1753,15 @@ export default function AdminConsolePage() {
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                   <label>Banner Background Image URL</label>
-                  <input
-                    type="url"
-                    className={styles.formInput}
+                  <ImageUploader
                     value={settings.promotionBanner?.imageUrl || ''}
-                    onChange={(e) =>
+                    onChange={(url) =>
                       setSettings({
                         ...settings,
-                        promotionBanner: { ...settings.promotionBanner, imageUrl: e.target.value },
+                        promotionBanner: { ...settings.promotionBanner, imageUrl: url },
                       })
                     }
-                    placeholder="https://..."
+                    canUpload={canUpload}
                   />
                 </div>
               </div>
@@ -2102,13 +2103,20 @@ export default function AdminConsolePage() {
                 </div>
 
                 <div className={styles.formGroup}>
+                  <label>Logo Image URL</label>
+                  <ImageUploader
+                    value={settings.logoImageUrl || ''}
+                    onChange={(url) => setSettings({ ...settings, logoImageUrl: url })}
+                    canUpload={canUpload}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
                   <label>Favicon Icon URL</label>
-                  <input
-                    type="text"
-                    className={styles.formInput}
+                  <ImageUploader
                     value={settings.faviconUrl || ''}
-                    onChange={(e) => setSettings({ ...settings, faviconUrl: e.target.value })}
-                    placeholder="/favicon.svg"
+                    onChange={(url) => setSettings({ ...settings, faviconUrl: url })}
+                    canUpload={canUpload}
                   />
                 </div>
               </div>
@@ -2499,17 +2507,13 @@ export default function AdminConsolePage() {
                   Use the Up/Down arrows to reorder how images will appear in the customer slider. The top image is the primary cover.
                 </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <input
-                    type="url"
-                    className={styles.formInput}
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="Paste image URL (e.g. https://images.unsplash.com/...)"
+                <div style={{ marginBottom: '1rem' }}>
+                  <ImageUploader
+                    value=""
+                    onChange={appendProductImage}
+                    label="Add an image (upload or paste a URL)"
+                    canUpload={canUpload}
                   />
-                  <button type="button" onClick={addImage} className={styles.primaryActionBtn}>
-                    <Plus size={16} /> Add Image
-                  </button>
                 </div>
 
                 <div className={styles.reorderList}>
@@ -2688,34 +2692,12 @@ export default function AdminConsolePage() {
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label>Cover Image URL</label>
-                  <input
-                    type="url"
-                    className={styles.formInput}
-                    value={categoryForm.image}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, image: e.target.value })}
-                    placeholder="https://images.unsplash.com/photo-..."
+                  <ImageUploader
+                    value={categoryForm.image || ''}
+                    onChange={(url) => setCategoryForm({ ...categoryForm, image: url })}
+                    label="Cover Image"
+                    canUpload={canUpload}
                   />
-                  {categoryForm.image && (
-                    <div
-                      style={{
-                        marginTop: '0.75rem',
-                        height: '130px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        position: 'relative',
-                      }}
-                    >
-                      <SafeImage
-                        src={categoryForm.image}
-                        alt="Preview"
-                        fill
-                        sizes="400px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
 

@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# user-uploaded media (stored on disk, not committed)
+public/uploads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
