@@ -32,6 +32,7 @@ import {
   Tag,
   FolderPlus,
   Layers,
+  TicketPercent,
 } from 'lucide-react';
 import { categories as fallbackCategories } from '@/data/products';
 import styles from './admin.module.css';
@@ -65,7 +66,7 @@ export default function AdminConsolePage() {
   const [loginError, setLoginError] = useState('');
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'promo' | 'feedback' | 'settings'
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'settings'
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
 
   // Data states
@@ -101,6 +102,21 @@ export default function AdminConsolePage() {
     tagline: 'Pure & Natural Botanicals',
   });
   const [categorySaving, setCategorySaving] = useState(false);
+
+  // Coupon state
+  const [coupons, setCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [couponSaving, setCouponSaving] = useState(false);
+  const [couponForm, setCouponForm] = useState({
+    code: '',
+    type: 'percent',
+    value: '',
+    minOrder: '',
+    expiresAt: '',
+    usageLimit: '',
+    active: true,
+  });
 
   // Product Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -173,6 +189,24 @@ export default function AdminConsolePage() {
       console.error(err);
     } finally {
       setFeedbackLoading(false);
+    }
+  }, []);
+
+  // Load coupons (admin) — GET auto-seeds the default ORGANIC25 coupon when empty
+  const fetchCoupons = useCallback(async () => {
+    setCouponsLoading(true);
+    try {
+      const res = await fetch('/api/coupons');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCoupons(data.coupons || []);
+      } else {
+        console.error(data.error || 'Failed to load coupons');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCouponsLoading(false);
     }
   }, []);
 
@@ -260,6 +294,13 @@ export default function AdminConsolePage() {
     }
   }, [isAuthenticated, activeTab, fetchOrders, fetchPendingOrdersCount]);
 
+  // Load coupons when the coupons tab is opened
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'coupons') {
+      fetchCoupons();
+    }
+  }, [isAuthenticated, activeTab, fetchCoupons]);
+
   const showNotification = (type, text) => {
     setStatusMsg({ type, text });
     setTimeout(() => setStatusMsg({ type: '', text: '' }), 4000);
@@ -344,6 +385,127 @@ export default function AdminConsolePage() {
       showNotification('error', 'Network error deleting category');
     }
   };
+
+  // ---------------------------------------------------------------------------
+  // Coupon handlers
+  // ---------------------------------------------------------------------------
+  const openCouponModal = () => {
+    setCouponForm({
+      code: '',
+      type: 'percent',
+      value: '',
+      minOrder: '',
+      expiresAt: '',
+      usageLimit: '',
+      active: true,
+    });
+    setCouponModalOpen(true);
+  };
+
+  const handleSaveCoupon = async (e) => {
+    e.preventDefault();
+    const code = couponForm.code.trim().toUpperCase();
+    if (!code) {
+      showNotification('error', 'Coupon code is required');
+      return;
+    }
+    if (!couponForm.value || Number(couponForm.value) <= 0) {
+      showNotification('error', 'Discount value must be greater than 0');
+      return;
+    }
+    if (couponForm.type === 'percent' && Number(couponForm.value) > 100) {
+      showNotification('error', 'Percent coupons cannot exceed 100%');
+      return;
+    }
+
+    const payload = {
+      code,
+      type: couponForm.type,
+      value: Number(couponForm.value),
+      minOrder: couponForm.minOrder === '' ? 0 : Number(couponForm.minOrder),
+      expiresAt: couponForm.expiresAt || null,
+      usageLimit: couponForm.usageLimit === '' ? null : Number(couponForm.usageLimit),
+      active: couponForm.active,
+    };
+
+    setCouponSaving(true);
+    try {
+      const res = await fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCoupons((prev) => [data.coupon, ...prev]);
+        setCouponModalOpen(false);
+        showNotification('success', `Coupon "${code}" created successfully!`);
+      } else {
+        showNotification('error', data.error || 'Failed to create coupon');
+      }
+    } catch (err) {
+      showNotification('error', 'Network error saving coupon');
+    } finally {
+      setCouponSaving(false);
+    }
+  };
+
+  const handleToggleCouponActive = async (coupon) => {
+    try {
+      const res = await fetch('/api/coupons', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: coupon.code, active: !coupon.active }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCoupons((prev) =>
+          prev.map((c) => (c.code === coupon.code ? { ...c, active: data.coupon.active } : c))
+        );
+        showNotification(
+          'success',
+          `Coupon "${coupon.code}" ${data.coupon.active ? 'activated' : 'deactivated'}.`
+        );
+      } else {
+        showNotification('error', data.error || 'Failed to update coupon');
+      }
+    } catch (err) {
+      showNotification('error', 'Network error updating coupon');
+    }
+  };
+
+  const handleDeleteCoupon = async (coupon) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete the coupon "${coupon.code}"? Customers will no longer be able to use it.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/coupons?code=${encodeURIComponent(coupon.code)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCoupons((prev) => prev.filter((c) => c.code !== coupon.code));
+        showNotification('success', `Coupon "${coupon.code}" deleted.`);
+      } else {
+        showNotification('error', data.error || 'Failed to delete coupon');
+      }
+    } catch (err) {
+      showNotification('error', 'Network error deleting coupon');
+    }
+  };
+
+  const formatCouponDiscount = (coupon) =>
+    coupon.type === 'percent' ? `${coupon.value}%` : `PKR ${Number(coupon.value).toLocaleString()}`;
+
+  const formatCouponUsage = (coupon) =>
+    `${coupon.usedCount || 0}/${coupon.usageLimit != null ? coupon.usageLimit : '∞'}`;
+
+  const formatCouponExpiry = (coupon) =>
+    coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : 'Never';
 
   // Login handler
   const handleLogin = async (e) => {
@@ -758,6 +920,14 @@ export default function AdminConsolePage() {
         </button>
 
         <button
+          className={`${styles.navTab} ${activeTab === 'coupons' ? styles.navTabActive : ''}`}
+          onClick={() => setActiveTab('coupons')}
+        >
+          <TicketPercent size={16} />
+          <span>Discount Coupons ({coupons.length})</span>
+        </button>
+
+        <button
           className={`${styles.navTab} ${activeTab === 'promo' ? styles.navTabActive : ''}`}
           onClick={() => setActiveTab('promo')}
         >
@@ -1153,6 +1323,115 @@ export default function AdminConsolePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===================== TAB: DISCOUNT COUPONS ===================== */}
+        {activeTab === 'coupons' && (
+          <div>
+            <div className={styles.tabHeader}>
+              <div>
+                <h2 className={styles.tabTitle}>Discount Coupons</h2>
+                <p className={styles.tabSubtitle}>
+                  Create and manage discount codes. Codes are validated at checkout — an invalid or expired
+                  code rejects the order so the customer can fix it.
+                </p>
+              </div>
+              <button onClick={openCouponModal} className={styles.primaryActionBtn}>
+                <Plus size={16} />
+                <span>Add Coupon</span>
+              </button>
+            </div>
+
+            {couponsLoading ? (
+              <div className={styles.loadingBox}>
+                <RefreshCw size={24} className={styles.spinning} />
+                <p>Loading coupons...</p>
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className={styles.emptyState}>
+                <TicketPercent size={40} color="#79A36E" style={{ marginBottom: '1rem' }} />
+                <h3>No Coupons Yet</h3>
+                <p>Create your first discount coupon to reward your customers.</p>
+                <button
+                  onClick={openCouponModal}
+                  className={styles.primaryActionBtn}
+                  style={{ marginTop: '1rem' }}
+                >
+                  <Plus size={16} />
+                  <span>Create Coupon</span>
+                </button>
+              </div>
+            ) : (
+              <div className={styles.tableCard}>
+                <div className={styles.tableWrapper}>
+                  <table className={styles.dataTable}>
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Discount</th>
+                        <th>Min Order</th>
+                        <th>Usage</th>
+                        <th>Expiry</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {coupons.map((coupon) => (
+                        <tr key={coupon.code}>
+                          <td>
+                            <strong style={{ letterSpacing: '0.05em' }}>{coupon.code}</strong>
+                          </td>
+                          <td>{formatCouponDiscount(coupon)}</td>
+                          <td>
+                            {coupon.minOrder > 0
+                              ? `PKR ${Number(coupon.minOrder).toLocaleString()}`
+                              : '—'}
+                          </td>
+                          <td>{formatCouponUsage(coupon)}</td>
+                          <td>{formatCouponExpiry(coupon)}</td>
+                          <td>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCouponActive(coupon)}
+                              title={`Click to ${coupon.active ? 'deactivate' : 'activate'}`}
+                              style={{
+                                padding: '0.25rem 0.6rem',
+                                borderRadius: 4,
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                textTransform: 'capitalize',
+                                whiteSpace: 'nowrap',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: coupon.active ? '#75E089' : '#FF808A',
+                                background: coupon.active
+                                  ? 'rgba(40,167,69,0.15)'
+                                  : 'rgba(255,107,122,0.15)',
+                              }}
+                            >
+                              {coupon.active ? 'Active' : 'Inactive'}
+                            </button>
+                          </td>
+                          <td>
+                            <div className={styles.tableActions}>
+                              <button
+                                onClick={() => handleDeleteCoupon(coupon)}
+                                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                title="Delete coupon"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -2111,6 +2390,141 @@ export default function AdminConsolePage() {
                     : editingCategory
                     ? 'Update Category'
                     : 'Create Category'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Coupon Modal */}
+      {couponModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setCouponModalOpen(false)}>
+          <div className={styles.modalCard} style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Add New Coupon</h3>
+              <button onClick={() => setCouponModalOpen(false)} className={styles.closeBtn}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCoupon}>
+              <div className={styles.formGrid}>
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Coupon Code *</label>
+                  <input
+                    type="text"
+                    required
+                    className={styles.formInput}
+                    value={couponForm.code}
+                    onChange={(e) =>
+                      setCouponForm({
+                        ...couponForm,
+                        code: e.target.value.toUpperCase().replace(/[^A-Z0-9-_]/g, ''),
+                      })
+                    }
+                    placeholder="e.g. ORGANIC25, WELCOME500"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  <small style={{ color: '#8C9988', fontSize: '0.75rem', marginTop: '4px' }}>
+                    Stored uppercase — customers can type it in any case.
+                  </small>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Discount Type *</label>
+                  <select
+                    className={styles.formInput}
+                    value={couponForm.type}
+                    onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value })}
+                  >
+                    <option value="percent">Percent (%)</option>
+                    <option value="flat">Flat (PKR)</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Discount Value *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="any"
+                    className={styles.formInput}
+                    value={couponForm.value}
+                    onChange={(e) => setCouponForm({ ...couponForm, value: e.target.value })}
+                    placeholder={couponForm.type === 'percent' ? 'e.g. 25' : 'e.g. 500'}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Min Order (PKR)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    className={styles.formInput}
+                    value={couponForm.minOrder}
+                    onChange={(e) => setCouponForm({ ...couponForm, minOrder: e.target.value })}
+                    placeholder="0 = no minimum"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Usage Limit</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className={styles.formInput}
+                    value={couponForm.usageLimit}
+                    onChange={(e) => setCouponForm({ ...couponForm, usageLimit: e.target.value })}
+                    placeholder="Empty = unlimited"
+                  />
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Expiry Date</label>
+                  <input
+                    type="date"
+                    className={styles.formInput}
+                    value={couponForm.expiresAt}
+                    onChange={(e) => setCouponForm({ ...couponForm, expiresAt: e.target.value })}
+                  />
+                  <small style={{ color: '#8C9988', fontSize: '0.75rem', marginTop: '4px' }}>
+                    Leave empty for a coupon that never expires.
+                  </small>
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={couponForm.active}
+                      onChange={(e) => setCouponForm({ ...couponForm, active: e.target.checked })}
+                    />
+                    <span>Active — customers can use this coupon right away</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setCouponModalOpen(false)}
+                  className={styles.iconBtn}
+                  style={{ padding: '0.75rem 1.5rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={couponSaving}
+                  className={styles.primaryActionBtn}
+                  style={{ padding: '0.75rem 1.75rem' }}
+                >
+                  <Save size={16} /> {couponSaving ? 'Saving...' : 'Create Coupon'}
                 </button>
               </div>
             </form>
