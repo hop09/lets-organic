@@ -70,6 +70,7 @@ export function CartProvider({ children }) {
     } catch (e) {
       console.error('Failed to load cart:', e);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable during SSR, so hydration must run in a mount effect; a lazy useState initializer would mismatch the server HTML.
     setIsHydrated(true);
   }, []);
 

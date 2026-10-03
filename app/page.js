@@ -27,6 +27,7 @@ import {
   Heart,
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard/ProductCard';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import { products as fallbackProducts, categories } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -137,9 +138,15 @@ export default function HomePage() {
     ? heroProduct.images
     : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=700&h=700&fit=crop'];
 
-  useEffect(() => {
+  // Reset the gallery to the first image when the hero product changes. Done
+  // during render (not in an effect) via the "adjust state when props change"
+  // pattern so there is no post-commit cascading render.
+  const heroKey = `${heroProduct?.slug ?? ''}|${heroProduct?._id ?? ''}`;
+  const [prevHeroKey, setPrevHeroKey] = useState(heroKey);
+  if (prevHeroKey !== heroKey) {
+    setPrevHeroKey(heroKey);
     setActiveHeroImgIdx(0);
-  }, [heroProduct?.slug, heroProduct?._id]);
+  }
 
   const promo = settings?.promotionBanner;
 
@@ -180,10 +187,13 @@ export default function HomePage() {
                     <Heart size={18} fill={isHeroWishlisted ? 'currentColor' : 'none'} />
                   </button>
 
-                  <img
+                  <SafeImage
                     src={heroImages[activeHeroImgIdx] || heroImages[0]}
                     alt={heroProduct.name}
                     className={styles.heroMainImg}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    priority
                   />
 
                   <div className={styles.heroFloatingPill}>
@@ -203,7 +213,7 @@ export default function HomePage() {
                         onClick={() => setActiveHeroImgIdx(idx)}
                         aria-label={`View photo ${idx + 1}`}
                       >
-                        <img src={img} alt="" className={styles.heroThumbImg} />
+                        <SafeImage src={img} alt="" className={styles.heroThumbImg} width={60} height={60} />
                       </button>
                     ))}
                   </div>
@@ -387,7 +397,7 @@ export default function HomePage() {
                 className={styles.categoryCard}
               >
                 <div className={styles.categoryImgWrap}>
-                  <img src={cat.image} alt={cat.name} className={styles.categoryImg} />
+                  <SafeImage src={cat.image} alt={cat.name} className={styles.categoryImg} fill sizes="(max-width: 768px) 50vw, 25vw" />
                   <div className={styles.categoryGradientOverlay} />
                 </div>
 
@@ -467,13 +477,15 @@ export default function HomePage() {
               </div>
 
               <div className={styles.promoImageWrap}>
-                <img
+                <SafeImage
                   src={
                     promo?.imageUrl ||
                     'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&fit=crop'
                   }
                   alt="Organic Promotion"
                   className={styles.promoImg}
+                  width={800}
+                  height={450}
                 />
               </div>
             </div>
@@ -573,10 +585,12 @@ export default function HomePage() {
         <div className="container-wide">
           <div className={styles.whyUsGrid}>
             <div className={styles.whyUsVisual}>
-              <img
+              <SafeImage
                 src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&h=700&fit=crop"
                 alt="Organic farming"
                 className={styles.whyUsImg}
+                width={600}
+                height={700}
               />
               <div className={styles.whyUsBadge}>
                 <Sparkles size={20} />

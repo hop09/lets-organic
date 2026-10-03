@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './CartSidebar.module.css';
 
 export default function CartSidebar() {
@@ -39,7 +40,7 @@ export default function CartSidebar() {
             <div className={styles.items}>
               {items.map(item => (
                 <div key={item.id} className={styles.item}>
-                  <img src={item.images[0]} alt={item.name} className={styles.itemImage} />
+                  <SafeImage src={item.images[0]} alt={item.name} className={styles.itemImage} width={80} height={80} />
                   <div className={styles.itemInfo}>
                     <Link
                       href={`/product/${item.slug}`}

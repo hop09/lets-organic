@@ -8,26 +8,33 @@ import styles from './thankyou.module.css';
 
 const confettiColors = ['#5B7553', '#C8956C', '#E8F0E5', '#F5E6D8', '#3F5238', '#A87450', '#E8A634'];
 
-function ConfettiPiece({ index }) {
-  const style = {
+function ConfettiPiece({ style }) {
+  return <div className={styles.confettiPiece} style={style} />;
+}
+
+function makeConfettiStyles() {
+  return [...Array(50)].map((_, i) => ({
     left: `${Math.random() * 100}%`,
     animationDelay: `${Math.random() * 3}s`,
     animationDuration: `${3 + Math.random() * 4}s`,
-    backgroundColor: confettiColors[index % confettiColors.length],
+    backgroundColor: confettiColors[i % confettiColors.length],
     width: `${6 + Math.random() * 8}px`,
     height: `${6 + Math.random() * 8}px`,
     borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-  };
-
-  return <div className={styles.confettiPiece} style={style} />;
+  }));
 }
 
 function ThankYouContent() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get('order');
   const [mounted, setMounted] = useState(false);
+  // Random values are generated once (stable across re-renders so the confetti
+  // doesn't reshuffle). useState initializer is used because useMemo triggers
+  // react-hooks/purity for Math.random.
+  const [confettiStyles] = useState(makeConfettiStyles);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only gate: confetti uses random values, so it must render after mount to avoid SSR hydration mismatch.
     setMounted(true);
   }, []);
 
@@ -36,8 +43,8 @@ function ThankYouContent() {
       {/* Confetti */}
       {mounted && (
         <div className={styles.confetti}>
-          {[...Array(50)].map((_, i) => (
-            <ConfettiPiece key={i} index={i} />
+          {confettiStyles.map((style, i) => (
+            <ConfettiPiece key={i} style={style} />
           ))}
         </div>
       )}

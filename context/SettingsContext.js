@@ -70,7 +70,11 @@ export function SettingsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    fetchSettings();
+    // Async IIFE: state updates happen in the fetch continuation (after await),
+    // not synchronously in the effect body.
+    (async () => {
+      await fetchSettings();
+    })();
   }, [fetchSettings]);
 
   // Dynamically update document title and favicon if client-side

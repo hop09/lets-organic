@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './cart.module.css';
 
 export default function CartPage() {
@@ -53,7 +54,7 @@ export default function CartPage() {
             {items.map(item => (
               <div key={item.id} className={styles.cartItem}>
                 <div className={styles.itemProduct}>
-                  <img src={item.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&fit=crop'} alt={item.name} className={styles.itemImage} />
+                  <SafeImage src={item.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&fit=crop'} alt={item.name} className={styles.itemImage} width={80} height={80} />
                   <div>
                     <Link href={`/product/${item.slug}`} className={styles.itemName}>
                       {item.name}

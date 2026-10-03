@@ -15,6 +15,7 @@ export function WishlistProvider({ children }) {
     try {
       const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable during SSR, so hydration must run in a mount effect; a lazy useState initializer would mismatch the server HTML.
         setItems(JSON.parse(stored));
       }
     } catch (e) {

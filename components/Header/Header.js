@@ -19,6 +19,7 @@ import {
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './Header.module.css';
 
 const navLinks = [
@@ -56,6 +57,7 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchInputRef = useRef(null);
   const pathname = usePathname();
+  const [prevPathname, setPrevPathname] = useState(pathname);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
   const { settings } = useSettings();
@@ -64,17 +66,21 @@ export default function Header() {
     ? settings.categories.map(c => ({ label: c.name, href: `/shop?category=${c.slug || c.id}` }))
     : categoryLinks;
 
+  // Close menus when navigation changes. Done during render (not in an
+  // effect) via the "adjust state when props change" pattern so there is no
+  // post-commit cascading render.
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setMobileOpen(false);
+    setSearchOpen(false);
+    setDropdownOpen(false);
+  }
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setSearchOpen(false);
-    setDropdownOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
@@ -269,10 +275,12 @@ export default function Header() {
                       className={styles.searchResultItem}
                       onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
                     >
-                      <img
+                      <SafeImage
                         src={p.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&fit=crop'}
                         alt={p.name}
                         className={styles.searchResultImg}
+                        width={48}
+                        height={48}
                       />
                       <div>
                         <p className={styles.searchResultName}>{p.name}</p>

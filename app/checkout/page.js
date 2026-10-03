@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Lock, ShieldCheck, ArrowLeft, Loader2, Tag, X, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useSettings } from '@/context/SettingsContext';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './checkout.module.css';
 
 export default function CheckoutPage() {
@@ -290,7 +291,7 @@ export default function CheckoutPage() {
             <div className={styles.summaryItems}>
               {items.map(item => (
                 <div key={item.id} className={styles.summaryItem}>
-                  <img src={item.images[0]} alt={item.name} className={styles.summaryImg} />
+                  <SafeImage src={item.images[0]} alt={item.name} className={styles.summaryImg} width={56} height={56} />
                   <div className={styles.summaryItemInfo}>
                     <p className={styles.summaryItemName}>{item.name}</p>
                     <p className={styles.summaryItemQty}>Qty: {item.quantity}</p>

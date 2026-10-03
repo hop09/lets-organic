@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, ShoppingBag, Star, Eye } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './ProductCard.module.css';
 
 export default function ProductCard({ product, index = 0 }) {
@@ -57,12 +58,13 @@ export default function ProductCard({ product, index = 0 }) {
 
         {/* Image Link */}
         <Link href={`/product/${product.slug}`} className={styles.imageInnerLink} aria-label={product.name}>
-          <img
+          <SafeImage
             src={product.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=500&fit=crop'}
             alt={product.name}
             className={`${styles.image} ${imgLoaded ? styles.imageLoaded : ''}`}
             onLoad={() => setImgLoaded(true)}
-            loading="lazy"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         </Link>
 

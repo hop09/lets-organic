@@ -35,6 +35,7 @@ import {
   TicketPercent,
 } from 'lucide-react';
 import { categories as fallbackCategories } from '@/data/products';
+import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './admin.module.css';
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -161,7 +162,11 @@ export default function AdminConsolePage() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    // Async IIFE: state updates happen in the fetch continuation (after await),
+    // not synchronously in the effect body.
+    (async () => {
+      await checkAuth();
+    })();
   }, [checkAuth]);
 
   // Load products
@@ -299,26 +304,35 @@ export default function AdminConsolePage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchProducts();
-      fetchFeedback();
-      fetchMessages();
-      fetchSettings();
-      fetchCategories();
+      // Async IIFE: state updates happen in the fetch continuations (after await),
+      // not synchronously in the effect body. Promise.all preserves the original
+      // concurrent firing of the independent fetches.
+      (async () => {
+        await Promise.all([fetchProducts(), fetchFeedback(), fetchMessages(), fetchSettings(), fetchCategories()]);
+      })();
     }
   }, [isAuthenticated, fetchProducts, fetchFeedback, fetchMessages, fetchSettings, fetchCategories]);
 
   // Load orders when the orders tab is opened (also on page/filter changes)
   useEffect(() => {
     if (isAuthenticated && activeTab === 'orders') {
-      fetchOrders();
-      fetchPendingOrdersCount();
+      // Async IIFE: state updates happen in the fetch continuations (after await),
+      // not synchronously in the effect body. Promise.all preserves the original
+      // concurrent firing of the independent fetches.
+      (async () => {
+        await Promise.all([fetchOrders(), fetchPendingOrdersCount()]);
+      })();
     }
   }, [isAuthenticated, activeTab, fetchOrders, fetchPendingOrdersCount]);
 
   // Load coupons when the coupons tab is opened
   useEffect(() => {
     if (isAuthenticated && activeTab === 'coupons') {
-      fetchCoupons();
+      // Async IIFE: state updates happen in the fetch continuation (after await),
+      // not synchronously in the effect body.
+      (async () => {
+        await fetchCoupons();
+      })();
     }
   }, [isAuthenticated, activeTab, fetchCoupons]);
 
@@ -1086,10 +1100,12 @@ export default function AdminConsolePage() {
                         <tr key={prod._id || prod.slug}>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <img
+                              <SafeImage
                                 src={prod.images?.[0] || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&h=100&fit=crop'}
                                 alt={prod.name}
                                 className={styles.productThumb}
+                                width={48}
+                                height={48}
                               />
                               <div>
                                 <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{prod.name}</div>
@@ -1360,10 +1376,12 @@ export default function AdminConsolePage() {
                 {categoriesList.map((cat) => (
                   <div key={cat.slug || cat.id} className={styles.categoryCard}>
                     <div className={styles.categoryCardBanner}>
-                      <img
+                      <SafeImage
                         src={cat.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=700&fit=crop'}
                         alt={cat.name}
                         className={styles.categoryCardImg}
+                        fill
+                        sizes="400px"
                       />
                       {cat.badge && (
                         <span className={styles.categoryBadgeTag}>{cat.badge}</span>
@@ -2409,7 +2427,7 @@ export default function AdminConsolePage() {
                   {productForm.images.map((img, i) => (
                     <div key={i} className={styles.reorderItem}>
                       <span className={styles.reorderIndex}>#{i + 1}</span>
-                      <img src={img} alt="" className={styles.reorderThumb} />
+                      <SafeImage src={img} alt="" className={styles.reorderThumb} width={44} height={44} />
                       <span className={styles.reorderUrl}>{img}</span>
                       <div className={styles.reorderControls}>
                         <button
@@ -2597,12 +2615,15 @@ export default function AdminConsolePage() {
                         borderRadius: '8px',
                         overflow: 'hidden',
                         border: '1px solid rgba(255,255,255,0.1)',
+                        position: 'relative',
                       }}
                     >
-                      <img
+                      <SafeImage
                         src={categoryForm.image}
                         alt="Preview"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        fill
+                        sizes="400px"
+                        style={{ objectFit: 'cover' }}
                       />
                     </div>
                   )}
@@ -2831,10 +2852,12 @@ export default function AdminConsolePage() {
                     borderBottom: '1px solid rgba(255,255,255,0.06)',
                   }}
                 >
-                  <img
+                  <SafeImage
                     src={item.image || 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&h=100&fit=crop'}
                     alt={item.name}
                     className={styles.productThumb}
+                    width={48}
+                    height={48}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600 }}>{item.name}</div>
