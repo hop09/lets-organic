@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { authenticateAdmin, signAdminToken } from '@/lib/auth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request) {
   try {
+    // Brute-force protection: 8 attempts per 15 minutes per IP
+    if (!rateLimit(`login:${getClientIp(request)}`, { limit: 8, windowMs: 15 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again in 15 minutes.' },
+        { status: 429 }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -26,7 +35,6 @@ export async function POST(request) {
     const response = NextResponse.json({
       success: true,
       message: 'Authentication successful',
-      token,
       user: {
         email: admin.email,
         role: admin.role,

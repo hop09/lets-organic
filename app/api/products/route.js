@@ -70,11 +70,13 @@ export async function GET(request) {
     }
 
     if (search) {
+      // Escape regex metacharacters so user input can't break or abuse the query
+      const safeSearch = String(search).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
+        { category: { $regex: safeSearch, $options: 'i' } },
+        { tags: { $in: [new RegExp(safeSearch, 'i')] } },
       ];
     }
 

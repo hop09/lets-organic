@@ -39,8 +39,8 @@ export default function AdminConsolePage() {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
-  const [loginEmail, setLoginEmail] = useState('admin@letsorganic.store');
-  const [loginPassword, setLoginPassword] = useState('waqar4527');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -555,7 +555,7 @@ export default function AdminConsolePage() {
                 className={styles.formInput}
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="admin@letsorganic.store"
+                placeholder="you@example.com"
               />
             </div>
 

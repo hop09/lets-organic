@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/mongodb';
 import Feedback from '@/models/Feedback';
 import Product from '@/models/Product';
 import { getAdminFromRequest } from '@/lib/auth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 // Helper to recalculate average rating & review count for a product
 async function updateProductRatingStats(productSlug) {
@@ -69,6 +70,14 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    // Spam protection: 10 reviews per hour per IP
+    if (!rateLimit(`feedback:${getClientIp(request)}`, { limit: 10, windowMs: 60 * 60 * 1000 })) {
+      return NextResponse.json(
+        { error: 'Too many reviews submitted. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     await connectToDatabase();
     const data = await request.json();
 
@@ -81,14 +90,34 @@ export async function POST(request) {
       );
     }
 
+    if (!/^\S+@\S+\.\S+$/.test(userEmail.trim())) {
+      return NextResponse.json({ error: 'Please provide a valid email address.' }, { status: 400 });
+    }
+
+    const ratingNum = Number(rating);
+    if (!Number.isFinite(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return NextResponse.json({ error: 'Rating must be between 1 and 5.' }, { status: 400 });
+    }
+
+    if (String(userName).trim().length > 80 || String(comment).trim().length > 2000 || String(title || '').trim().length > 120) {
+      return NextResponse.json({ error: 'Review fields exceed maximum length.' }, { status: 400 });
+    }
+
+    // Only allow reviews for products that exist
+    const product = await Product.findOne({ slug: productSlug }).select('_id name slug').lean();
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
+    }
+
     const newFeedback = await Feedback.create({
-      productSlug,
-      productName: productName || productSlug,
-      userName: userName.trim(),
-      userEmail: userEmail.trim().toLowerCase(),
-      rating: Number(rating),
-      title: title ? title.trim() : '',
-      comment: comment.trim(),
+      productId: product._id,
+      productSlug: product.slug,
+      productName: product.name,
+      userName: String(userName).trim().slice(0, 80),
+      userEmail: String(userEmail).trim().toLowerCase(),
+      rating: ratingNum,
+      title: title ? String(title).trim().slice(0, 120) : '',
+      comment: String(comment).trim().slice(0, 2000),
       isApproved: false, // Must be approved by admin before displaying on website
     });
 
