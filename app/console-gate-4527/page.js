@@ -66,7 +66,7 @@ export default function AdminConsolePage() {
   const [loginError, setLoginError] = useState('');
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'settings'
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'messages' | 'settings'
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
 
   // Data states
@@ -75,6 +75,10 @@ export default function AdminConsolePage() {
   const [feedbackList, setFeedbackList] = useState([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackFilter, setFeedbackFilter] = useState('all'); // 'all' | 'pending' | 'approved'
+  const [messagesList, setMessagesList] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesFilter, setMessagesFilter] = useState('all'); // 'all' | 'unread' | 'read'
+  const [expandedMessageId, setExpandedMessageId] = useState(null);
 
   // Orders state
   const [orders, setOrders] = useState([]);
@@ -192,6 +196,22 @@ export default function AdminConsolePage() {
     }
   }, []);
 
+  // Load contact messages
+  const fetchMessages = useCallback(async () => {
+    setMessagesLoading(true);
+    try {
+      const res = await fetch('/api/contact');
+      const data = await res.json();
+      if (data.success) {
+        setMessagesList(data.messages || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  }, []);
+
   // Load coupons (admin) — GET auto-seeds the default ORGANIC25 coupon when empty
   const fetchCoupons = useCallback(async () => {
     setCouponsLoading(true);
@@ -281,10 +301,11 @@ export default function AdminConsolePage() {
     if (isAuthenticated) {
       fetchProducts();
       fetchFeedback();
+      fetchMessages();
       fetchSettings();
       fetchCategories();
     }
-  }, [isAuthenticated, fetchProducts, fetchFeedback, fetchSettings, fetchCategories]);
+  }, [isAuthenticated, fetchProducts, fetchFeedback, fetchMessages, fetchSettings, fetchCategories]);
 
   // Load orders when the orders tab is opened (also on page/filter changes)
   useEffect(() => {
@@ -733,6 +754,42 @@ export default function AdminConsolePage() {
     }
   };
 
+  // Contact message read/unread toggle
+  const handleToggleMessageRead = async (item, shouldMarkRead) => {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: item._id, read: shouldMarkRead }),
+      });
+      if (res.ok) {
+        showNotification('success', shouldMarkRead ? 'Message marked as read' : 'Message marked as unread');
+        fetchMessages();
+      } else {
+        showNotification('error', 'Failed to update message status');
+      }
+    } catch (e) {
+      showNotification('error', 'Error updating message');
+    }
+  };
+
+  // Delete contact message
+  const handleDeleteMessage = async (id) => {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    try {
+      const res = await fetch(`/api/contact?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showNotification('success', 'Message deleted');
+        setExpandedMessageId((prev) => (prev === id ? null : prev));
+        fetchMessages();
+      } else {
+        showNotification('error', 'Failed to delete message');
+      }
+    } catch (e) {
+      showNotification('error', 'Error deleting message');
+    }
+  };
+
   // Update order status
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     setOrderStatusUpdating(true);
@@ -861,6 +918,16 @@ export default function AdminConsolePage() {
     return true;
   });
 
+  // Unread contact messages count
+  const unreadMessagesCount = messagesList.filter(m => !m.read).length;
+
+  // Filtered contact messages
+  const filteredMessages = messagesList.filter(m => {
+    if (messagesFilter === 'unread') return !m.read;
+    if (messagesFilter === 'read') return m.read;
+    return true;
+  });
+
   // --- 2. AUTHENTICATED DASHBOARD ---
   return (
     <div className={styles.adminWrapper}>
@@ -943,6 +1010,17 @@ export default function AdminConsolePage() {
           <span>Reviews & Feedback</span>
           {pendingFeedbackCount > 0 && (
             <span className={styles.badgeCount}>{pendingFeedbackCount} pending</span>
+          )}
+        </button>
+
+        <button
+          className={`${styles.navTab} ${activeTab === 'messages' ? styles.navTabActive : ''}`}
+          onClick={() => setActiveTab('messages')}
+        >
+          <Mail size={16} />
+          <span>Messages</span>
+          {unreadMessagesCount > 0 && (
+            <span className={styles.badgeCount}>{unreadMessagesCount} unread</span>
           )}
         </button>
 
@@ -1713,6 +1791,155 @@ export default function AdminConsolePage() {
           </div>
         )}
 
+        {/* ===================== TAB: CONTACT MESSAGES ===================== */}
+        {activeTab === 'messages' && (
+          <div>
+            <div className={styles.tabHeader}>
+              <div>
+                <h2 className={styles.tabTitle}>Contact Messages</h2>
+                <p className={styles.tabSubtitle}>Messages submitted through the contact form. Click a message to read it in full.</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setMessagesFilter('all')}
+                  className={`${styles.iconBtn} ${messagesFilter === 'all' ? styles.navTabActive : ''}`}
+                >
+                  All ({messagesList.length})
+                </button>
+                <button
+                  onClick={() => setMessagesFilter('unread')}
+                  className={`${styles.iconBtn} ${messagesFilter === 'unread' ? styles.navTabActive : ''}`}
+                >
+                  Unread ({unreadMessagesCount})
+                </button>
+                <button
+                  onClick={() => setMessagesFilter('read')}
+                  className={`${styles.iconBtn} ${messagesFilter === 'read' ? styles.navTabActive : ''}`}
+                >
+                  Read ({messagesList.length - unreadMessagesCount})
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.tableCard}>
+              <div className={styles.tableWrapper}>
+                <table className={styles.dataTable}>
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Date</th>
+                      <th>Name</th>
+                      <th>Subject</th>
+                      <th>Message</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMessages.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className={styles.emptyState}>
+                          {messagesLoading ? 'Loading messages...' : 'No messages found matching filter.'}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredMessages.flatMap((item) => {
+                        const expanded = expandedMessageId === item._id;
+                        const excerpt = item.message.length > 90 ? `${item.message.slice(0, 90)}…` : item.message;
+                        return [
+                          <tr key={item._id} style={!item.read ? { background: 'rgba(91,117,83,0.08)' } : undefined}>
+                            <td>
+                              {!item.read ? (
+                                <span style={{ color: '#C8956C', background: 'rgba(200,149,108,0.2)', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.75rem', fontWeight: 600 }}>
+                                  New
+                                </span>
+                              ) : (
+                                <span style={{ color: '#8C9988', background: 'rgba(255,255,255,0.06)', padding: '0.25rem 0.5rem', borderRadius: 4, fontSize: '0.75rem', fontWeight: 600 }}>
+                                  Read
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ fontSize: '0.75rem', color: '#8C9988', whiteSpace: 'nowrap' }}>
+                              {new Date(item.createdAt).toLocaleDateString()}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{item.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#8C9988' }}>{item.email}</div>
+                              {item.phone && (
+                                <div style={{ fontSize: '0.75rem', color: '#8C9988' }}>{item.phone}</div>
+                              )}
+                            </td>
+                            <td style={{ fontSize: '0.8125rem', color: '#B5C2B1' }}>
+                              {item.subject || '—'}
+                            </td>
+                            <td style={{ maxWidth: '320px' }}>
+                              <button
+                                onClick={() => {
+                                  setExpandedMessageId(expanded ? null : item._id);
+                                  if (!item.read && !expanded) handleToggleMessageRead(item, true);
+                                }}
+                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', color: '#B5C2B1', fontSize: '0.8125rem', whiteSpace: 'normal' }}
+                                title="Click to expand"
+                              >
+                                {expanded ? 'Hide full message' : excerpt}
+                              </button>
+                            </td>
+                            <td>
+                              <div className={styles.tableActions}>
+                                {!item.read ? (
+                                  <button
+                                    onClick={() => handleToggleMessageRead(item, true)}
+                                    className={`${styles.iconBtn} ${styles.iconBtnSuccess}`}
+                                    title="Mark as read"
+                                  >
+                                    <Check size={16} />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleToggleMessageRead(item, false)}
+                                    className={styles.iconBtn}
+                                    title="Mark as unread"
+                                  >
+                                    <Mail size={16} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteMessage(item._id)}
+                                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                  title="Delete Permanently"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>,
+                          expanded && (
+                            <tr key={`${item._id}-expanded`}>
+                              <td colSpan={6} style={{ background: 'rgba(91,117,83,0.05)', padding: '1rem 1.25rem' }}>
+                                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8C9988', marginBottom: '0.5rem' }}>
+                                  Full message
+                                </div>
+                                {item.subject && (
+                                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#E4EBE2', marginBottom: '0.5rem' }}>
+                                    {item.subject}
+                                  </div>
+                                )}
+                                <p style={{ color: '#D9E2D6', fontSize: '0.9rem', lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0 }}>
+                                  {item.message}
+                                </p>
+                              </td>
+                            </tr>
+                          ),
+                        ];
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ===================== TAB 4: STORE SETTINGS & BRANDING ===================== */}
         {activeTab === 'settings' && settings && (
           <form onSubmit={handleSaveSettings} style={{ maxWidth: '900px' }}>
@@ -2093,6 +2320,19 @@ export default function AdminConsolePage() {
                     value={productForm.tagsText}
                     onChange={(e) => setProductForm({ ...productForm, tagsText: e.target.value })}
                     placeholder="Organic, Vegan, Cold-Pressed"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Stock Count</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className={styles.formInput}
+                    value={productForm.stockCount}
+                    onChange={(e) => setProductForm({ ...productForm, stockCount: e.target.value })}
+                    placeholder="50"
                   />
                 </div>
 

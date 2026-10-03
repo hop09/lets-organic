@@ -148,6 +148,17 @@
   background: var(--primary-dark);
 }
 
+.newsletterStatus {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin-top: var(--space-sm);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.newsletterStatusError {
+  color: #ffb3b3;
+}
+
 /* Bottom */
 .footerBottom {
   border-top: 1px solid rgba(255, 255, 255, 0.08);

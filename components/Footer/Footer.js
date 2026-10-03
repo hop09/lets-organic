@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Leaf, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
@@ -23,6 +24,10 @@ export default function Footer() {
   const pathname = usePathname();
   const { settings } = useSettings();
 
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState({ type: '', text: '' });
+  const [newsletterSending, setNewsletterSending] = useState(false);
+
   // Hide footer on hidden admin panel
   if (pathname?.startsWith('/console-gate-4527')) {
     return null;
@@ -30,8 +35,49 @@ export default function Footer() {
 
   const siteName = settings?.siteName || settings?.logoText || 'Lets Organic';
   const email = settings?.contactEmail || 'admin@letsorganic.store';
-  const phone = settings?.contactPhone || '+1 (800) 452-7890';
-  const address = settings?.contactAddress || '128 Organic Valley Way, Suite 400';
+  const phone = settings?.contactPhone || '+92 300 1234567';
+  const address = settings?.contactAddress || 'Lets Organic Hub, Lahore, Pakistan';
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (newsletterSending) return;
+
+    const trimmed = newsletterEmail.trim();
+    if (!trimmed) {
+      setNewsletterStatus({ type: 'error', text: 'Please enter your email address.' });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setNewsletterStatus({ type: 'error', text: 'Please enter a valid email address.' });
+      return;
+    }
+
+    setNewsletterSending(true);
+    setNewsletterStatus({ type: '', text: '' });
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNewsletterStatus({
+          type: 'success',
+          text: data.alreadySubscribed
+            ? 'You are already subscribed — thank you!'
+            : 'Subscribed! Welcome to the Lets Organic community.',
+        });
+        setNewsletterEmail('');
+      } else {
+        setNewsletterStatus({ type: 'error', text: data.error || 'Something went wrong. Please try again.' });
+      }
+    } catch (err) {
+      setNewsletterStatus({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setNewsletterSending(false);
+    }
+  };
 
   return (
     <footer className={styles.footer}>
@@ -72,10 +118,10 @@ export default function Footer() {
               <h4 className={styles.footerColTitle}>Help</h4>
               <ul className={styles.footerLinks}>
                 <li><Link href="/contact">Contact Us</Link></li>
-                <li><a href="#">Shipping Info</a></li>
-                <li><a href="#">Returns & Refunds</a></li>
-                <li><a href="#">FAQ</a></li>
-                <li><a href="#">Privacy Policy</a></li>
+                <li><Link href="/shipping">Shipping Info</Link></li>
+                <li><Link href="/returns">Returns & Refunds</Link></li>
+                <li><Link href="/faq">FAQ</Link></li>
+                <li><Link href="/privacy">Privacy Policy</Link></li>
               </ul>
             </div>
 
@@ -100,12 +146,25 @@ export default function Footer() {
               {/* Newsletter */}
               <div className={styles.newsletter}>
                 <p className={styles.newsletterLabel}>Subscribe to updates</p>
-                <div className={styles.newsletterForm}>
-                  <input type="email" placeholder="Your email" className={styles.newsletterInput} />
-                  <button className={styles.newsletterBtn} aria-label="Subscribe">
+                <form className={styles.newsletterForm} onSubmit={handleNewsletterSubmit}>
+                  <input
+                    type="email"
+                    placeholder="Your email"
+                    className={styles.newsletterInput}
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    aria-label="Email for newsletter"
+                    maxLength={254}
+                  />
+                  <button type="submit" className={styles.newsletterBtn} aria-label="Subscribe" disabled={newsletterSending}>
                     <ArrowRight size={18} />
                   </button>
-                </div>
+                </form>
+                {newsletterStatus.text && (
+                  <p className={`${styles.newsletterStatus} ${newsletterStatus.type === 'error' ? styles.newsletterStatusError : ''}`}>
+                    {newsletterStatus.text}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -117,9 +176,9 @@ export default function Footer() {
           <div className={styles.footerBottomInner}>
             <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
             <div className={styles.footerBottomLinks}>
-              <a href="#">Terms</a>
-              <a href="#">Privacy</a>
-              <a href="#">Cookies</a>
+              <Link href="/privacy">Terms</Link>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/privacy">Cookies</Link>
             </div>
           </div>
         </div>
