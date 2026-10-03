@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
+  BarChart3,
   Shield,
   Lock,
   Mail,
@@ -40,11 +41,13 @@ import SafeImage from '@/components/SafeImage/SafeImage';
 import ImageUploader from '@/components/ImageUploader/ImageUploader';
 import TeamTab from '@/components/Admin/TeamTab';
 import OrdersTab from '@/components/Admin/OrdersTab';
+import DashboardTab from '@/components/Admin/DashboardTab';
 import { hasPermission } from '@/lib/permissionsClient';
 import styles from './admin.module.css';
 
 // Console tab → required permission key. Owners see everything.
 const TAB_PERMISSIONS = {
+  dashboard: 'analytics.view',
   products: 'products.view',
   orders: 'orders.view',
   categories: 'categories.manage',
@@ -67,7 +70,7 @@ export default function AdminConsolePage() {
   const [loginError, setLoginError] = useState('');
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'messages' | 'settings' | 'team'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'messages' | 'settings' | 'team'
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
 
   // Data states
@@ -523,7 +526,7 @@ export default function AdminConsolePage() {
     await fetch('/api/auth/me', { method: 'POST' });
     setIsAuthenticated(false);
     setAdminUser(null);
-    setActiveTab('products');
+    setActiveTab('dashboard');
   };
 
   // Open modal for Create/Edit
@@ -798,7 +801,7 @@ export default function AdminConsolePage() {
     (async () => {
       await Promise.resolve();
       if (isAuthenticated && adminUser && !visibleTabs.includes(activeTab)) {
-        setActiveTab(visibleTabs[0] || 'products');
+        setActiveTab(visibleTabs[0] || 'dashboard');
       }
     })();
   }, [isAuthenticated, adminUser, activeTab, visibleTabs]);
@@ -930,6 +933,16 @@ export default function AdminConsolePage() {
 
       {/* Tabs Navigation */}
       <nav className={styles.navTabs}>
+        {canViewTab('dashboard') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'dashboard' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <BarChart3 size={16} />
+            <span>Dashboard</span>
+          </button>
+        )}
+
         {canViewTab('products') && (
           <button
             className={`${styles.navTab} ${activeTab === 'products' ? styles.navTabActive : ''}`}
@@ -1053,6 +1066,11 @@ export default function AdminConsolePage() {
             </p>
           </div>
         )}
+        {/* ===================== TAB: DASHBOARD ===================== */}
+        {activeTab === 'dashboard' && (
+          <DashboardTab adminUser={adminUser} onViewOrders={() => setActiveTab('orders')} />
+        )}
+
         {/* ===================== TAB 1: PRODUCTS ===================== */}
         {activeTab === 'products' && (
           <div>

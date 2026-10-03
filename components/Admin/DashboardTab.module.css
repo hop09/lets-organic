@@ -1,0 +1,559 @@
+/* ==========================================================================
+   Analytics Dashboard Tab — dark console theme matching the admin module
+   ========================================================================== */
+
+.tabHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tabTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.25rem;
+}
+
+.tabSubtitle {
+  color: #8c9988;
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rangeSelector {
+  display: flex;
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.25rem;
+  gap: 0.15rem;
+}
+
+.rangeBtn {
+  background: transparent;
+  border: none;
+  color: #8c9988;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rangeBtn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rangeBtnActive {
+  background: #79a36e;
+  color: #0e120d;
+}
+
+.rangeBtnActive:hover {
+  background: #79a36e;
+  color: #0e120d;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b5c2b1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: dashboardSpin 1s linear infinite;
+}
+
+@keyframes dashboardSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------- KPI cards ------------------------------ */
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.kpiCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.kpiIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: rgba(121, 163, 110, 0.15);
+  color: #79a36e;
+  flex-shrink: 0;
+}
+
+.kpiLabel {
+  color: #8c9988;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.kpiValue {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.kpiSub {
+  color: #8c9988;
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+/* -------------------------------- Charts -------------------------------- */
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.chartCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  min-width: 0;
+}
+
+.chartTitle {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.chartBody {
+  height: 280px;
+  min-width: 0;
+}
+
+.chartEmpty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c9988;
+  font-size: 0.85rem;
+}
+
+.donutLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #b5c2b1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ----------------------------- Insight strip ---------------------------- */
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.insightCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.insightIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(200, 149, 108, 0.14);
+  color: #c8956c;
+  flex-shrink: 0;
+}
+
+.insightLabel {
+  color: #8c9988;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.insightValue {
+  color: #e8ede6;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* -------------------------------- Tables -------------------------------- */
+
+.tablesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tableCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.5rem 1rem;
+  min-width: 0;
+}
+
+.tableWide {
+  grid-column: 1 / -1;
+}
+
+.tableHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem 0;
+}
+
+.tableTitle {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 0.75rem 0.25rem 0;
+}
+
+.tableHeaderRow .tableTitle {
+  padding: 0;
+}
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #79a36e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.linkBtn:hover {
+  text-decoration: underline;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dataTable th {
+  text-align: left;
+  color: #8c9988;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  padding: 0.75rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.dataTable td {
+  padding: 0.9rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+  color: #e8ede6;
+}
+
+.dataTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dataTable tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.emptyState {
+  text-align: center;
+  color: #8c9988;
+  padding: 2rem 1rem !important;
+}
+
+.productLink {
+  color: #79a36e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.productLink:hover {
+  text-decoration: underline;
+}
+
+.stockPill {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e5b288;
+  background: rgba(200, 149, 108, 0.2);
+  white-space: nowrap;
+}
+
+.stockCritical {
+  color: #ff808a;
+  background: rgba(255, 107, 122, 0.15);
+}
+
+/* ---------------------------- Status badges ----------------------------- */
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.statusPending {
+  color: #e5b288;
+  background: rgba(200, 149, 108, 0.2);
+}
+
+.statusConfirmed {
+  color: #8bb8e5;
+  background: rgba(139, 184, 229, 0.18);
+}
+
+.statusShipped {
+  color: #c9a9e5;
+  background: rgba(201, 169, 229, 0.18);
+}
+
+.statusDelivered {
+  color: #75e089;
+  background: rgba(40, 167, 69, 0.15);
+}
+
+.statusCancelled {
+  color: #ff808a;
+  background: rgba(255, 107, 122, 0.15);
+}
+
+.statusDefault {
+  color: #b5c2b1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------- Empty / error states ------------------------- */
+
+.emptyHero {
+  background: #171e18;
+  border: 1px dashed rgba(121, 163, 110, 0.4);
+  border-radius: 14px;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.emptyHero h3 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.emptyHero p {
+  color: #8c9988;
+  font-size: 0.92rem;
+  margin: 0 auto;
+  max-width: 52ch;
+}
+
+.errorCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 107, 122, 0.08);
+  border: 1px solid rgba(255, 107, 122, 0.3);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  color: #ffb3b9;
+  margin-bottom: 1.25rem;
+}
+
+.errorCard p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #d9a3a8;
+}
+
+.ghostBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b5c2b1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.ghostBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.accessCard {
+  background: #171e18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #171e18;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: dashboardShimmer 1.4s infinite;
+}
+
+@keyframes dashboardShimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ------------------------------ Responsive ------------------------------ */
+
+@media (max-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chartsGrid,
+  .tablesGrid,
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .rangeSelector {
+    flex-wrap: wrap;
+  }
+}
