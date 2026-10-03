@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import Feedback from '@/models/Feedback';
 import Product from '@/models/Product';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 // Helper to recalculate average rating & review count for a product
@@ -29,10 +29,8 @@ export async function GET(request) {
     const status = searchParams.get('status'); // 'pending' | 'approved' | 'all'
 
     if (isAdminQuery) {
-      const admin = getAdminFromRequest(request);
-      if (!admin) {
-        return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-      }
+      const { response } = await requirePermissions(request, ['feedback.moderate']);
+      if (response) return response;
 
       let query = {};
       if (status === 'pending') {
@@ -140,10 +138,8 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['feedback.moderate']);
+    if (response) return response;
 
     await connectToDatabase();
     const { feedbackId, isApproved } = await request.json();
@@ -186,10 +182,8 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['feedback.moderate']);
+    if (response) return response;
 
     await connectToDatabase();
     const { searchParams } = new URL(request.url);

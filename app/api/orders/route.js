@@ -5,7 +5,7 @@ import connectToDatabase from '@/lib/mongodb';
 import Order, { ORDER_STATUSES } from '@/models/Order';
 import Product from '@/models/Product';
 import SiteSettings from '@/models/SiteSettings';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { validateCoupon, recordCouponUse } from '@/lib/coupons';
 
@@ -328,10 +328,8 @@ export async function POST(request) {
 // GET /api/orders — list orders (admin only)
 // ---------------------------------------------------------------------------
 export async function GET(request) {
-  const admin = getAdminFromRequest(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-  }
+  const { response } = await requirePermissions(request, ['orders.view']);
+  if (response) return response;
 
   try {
     await connectToDatabase();

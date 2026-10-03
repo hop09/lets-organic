@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import SiteSettings from '@/models/SiteSettings';
 import Product from '@/models/Product';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { categories as fallbackCategories } from '@/data/products';
 
 export async function GET() {
@@ -54,10 +54,8 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['categories.manage']);
+    if (response) return response;
 
     await connectToDatabase();
     const body = await request.json();
@@ -125,10 +123,8 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['categories.manage']);
+    if (response) return response;
 
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug') || searchParams.get('id');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Shield,
@@ -33,10 +33,26 @@ import {
   FolderPlus,
   Layers,
   TicketPercent,
+  Users,
 } from 'lucide-react';
 import { categories as fallbackCategories } from '@/data/products';
 import SafeImage from '@/components/SafeImage/SafeImage';
+import TeamTab from '@/components/Admin/TeamTab';
+import { hasPermission } from '@/lib/permissionsClient';
 import styles from './admin.module.css';
+
+// Console tab → required permission key. Owners see everything.
+const TAB_PERMISSIONS = {
+  products: 'products.view',
+  orders: 'orders.view',
+  categories: 'categories.manage',
+  coupons: 'coupons.manage',
+  promo: 'settings.manage',
+  feedback: 'feedback.moderate',
+  messages: 'feedback.moderate',
+  settings: 'settings.manage',
+  team: 'users.manage',
+};
 
 const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
@@ -60,6 +76,7 @@ const orderStatusStyle = (status) => {
 export default function AdminConsolePage() {
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminUser, setAdminUser] = useState(null); // {id,email,name,permissions,isOwner}
   const [authChecking, setAuthChecking] = useState(true);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -67,7 +84,7 @@ export default function AdminConsolePage() {
   const [loginError, setLoginError] = useState('');
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'messages' | 'settings'
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories' | 'orders' | 'coupons' | 'promo' | 'feedback' | 'messages' | 'settings' | 'team'
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
 
   // Data states
@@ -152,7 +169,12 @@ export default function AdminConsolePage() {
         const data = await res.json();
         if (data.authenticated) {
           setIsAuthenticated(true);
+          setAdminUser(data.user || null);
+        } else {
+          setAdminUser(null);
         }
+      } else {
+        setAdminUser(null);
       }
     } catch (e) {
       console.error(e);
@@ -555,7 +577,8 @@ export default function AdminConsolePage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setIsAuthenticated(true);
+        // Re-run the session check so adminUser (permissions) is populated too.
+        await checkAuth();
       } else {
         setLoginError(data.error || 'Authentication failed');
       }
@@ -570,6 +593,8 @@ export default function AdminConsolePage() {
   const handleLogout = async () => {
     await fetch('/api/auth/me', { method: 'POST' });
     setIsAuthenticated(false);
+    setAdminUser(null);
+    setActiveTab('products');
   };
 
   // Open modal for Create/Edit
@@ -849,6 +874,27 @@ export default function AdminConsolePage() {
     }
   };
 
+  // Permission-gated tab visibility: hide tabs the current user can't view.
+  const visibleTabs = useMemo(
+    () =>
+      Object.keys(TAB_PERMISSIONS).filter(
+        (tab) => !adminUser || hasPermission(adminUser, TAB_PERMISSIONS[tab])
+      ),
+    [adminUser]
+  );
+
+  // If the active tab becomes hidden by permissions, fall back to the first visible tab.
+  useEffect(() => {
+    // Async IIFE: the fallback runs in the continuation (after await),
+    // not synchronously in the effect body.
+    (async () => {
+      await Promise.resolve();
+      if (isAuthenticated && adminUser && !visibleTabs.includes(activeTab)) {
+        setActiveTab(visibleTabs[0] || 'products');
+      }
+    })();
+  }, [isAuthenticated, adminUser, activeTab, visibleTabs]);
+
   // Loading state
   if (authChecking) {
     return (
@@ -942,6 +988,9 @@ export default function AdminConsolePage() {
     return true;
   });
 
+  // Tab visibility helper (visibleTabs is computed above from the user's permissions)
+  const canViewTab = (tab) => visibleTabs.includes(tab);
+
   // --- 2. AUTHENTICATED DASHBOARD ---
   return (
     <div className={styles.adminWrapper}>
@@ -973,78 +1022,104 @@ export default function AdminConsolePage() {
 
       {/* Tabs Navigation */}
       <nav className={styles.navTabs}>
-        <button
-          className={`${styles.navTab} ${activeTab === 'products' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('products')}
-        >
-          <Package size={16} />
-          <span>Products Catalog ({products.length})</span>
-        </button>
+        {canViewTab('products') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'products' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('products')}
+          >
+            <Package size={16} />
+            <span>Products Catalog ({products.length})</span>
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'orders' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('orders')}
-        >
-          <Receipt size={16} />
-          <span>Orders</span>
-          {pendingOrdersCount > 0 && (
-            <span className={styles.badgeCount}>{pendingOrdersCount} pending</span>
-          )}
-        </button>
+        {canViewTab('orders') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'orders' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            <Receipt size={16} />
+            <span>Orders</span>
+            {pendingOrdersCount > 0 && (
+              <span className={styles.badgeCount}>{pendingOrdersCount} pending</span>
+            )}
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'categories' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('categories')}
-        >
-          <Tag size={16} />
-          <span>Categories ({categoriesList.length})</span>
-        </button>
+        {canViewTab('categories') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'categories' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('categories')}
+          >
+            <Tag size={16} />
+            <span>Categories ({categoriesList.length})</span>
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'coupons' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('coupons')}
-        >
-          <TicketPercent size={16} />
-          <span>Discount Coupons ({coupons.length})</span>
-        </button>
+        {canViewTab('coupons') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'coupons' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('coupons')}
+          >
+            <TicketPercent size={16} />
+            <span>Discount Coupons ({coupons.length})</span>
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'promo' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('promo')}
-        >
-          <Megaphone size={16} />
-          <span>Promotion Banner</span>
-        </button>
+        {canViewTab('promo') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'promo' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('promo')}
+          >
+            <Megaphone size={16} />
+            <span>Promotion Banner</span>
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'feedback' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('feedback')}
-        >
-          <MessageSquare size={16} />
-          <span>Reviews & Feedback</span>
-          {pendingFeedbackCount > 0 && (
-            <span className={styles.badgeCount}>{pendingFeedbackCount} pending</span>
-          )}
-        </button>
+        {canViewTab('feedback') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'feedback' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('feedback')}
+          >
+            <MessageSquare size={16} />
+            <span>Reviews & Feedback</span>
+            {pendingFeedbackCount > 0 && (
+              <span className={styles.badgeCount}>{pendingFeedbackCount} pending</span>
+            )}
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'messages' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('messages')}
-        >
-          <Mail size={16} />
-          <span>Messages</span>
-          {unreadMessagesCount > 0 && (
-            <span className={styles.badgeCount}>{unreadMessagesCount} unread</span>
-          )}
-        </button>
+        {canViewTab('messages') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'messages' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('messages')}
+          >
+            <Mail size={16} />
+            <span>Messages</span>
+            {unreadMessagesCount > 0 && (
+              <span className={styles.badgeCount}>{unreadMessagesCount} unread</span>
+            )}
+          </button>
+        )}
 
-        <button
-          className={`${styles.navTab} ${activeTab === 'settings' ? styles.navTabActive : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          <Settings size={16} />
-          <span>Store Settings & Branding</span>
-        </button>
+        {canViewTab('settings') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'settings' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <Settings size={16} />
+            <span>Store Settings & Branding</span>
+          </button>
+        )}
+
+        {canViewTab('team') && (
+          <button
+            className={`${styles.navTab} ${activeTab === 'team' ? styles.navTabActive : ''}`}
+            onClick={() => setActiveTab('team')}
+          >
+            <Users size={16} />
+            <span>Team</span>
+          </button>
+        )}
       </nav>
 
       {/* Notification banner */}
@@ -1059,6 +1134,17 @@ export default function AdminConsolePage() {
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
+        {/* No console permissions at all */}
+        {visibleTabs.length === 0 && (
+          <div className={styles.settingsCard} style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+            <Shield size={36} color="#8C9988" style={{ marginBottom: '1rem' }} />
+            <h2 className={styles.tabTitle}>No console access</h2>
+            <p className={styles.tabSubtitle}>
+              Your account doesn&apos;t have permission to view any console section.
+              Please contact the store owner.
+            </p>
+          </div>
+        )}
         {/* ===================== TAB 1: PRODUCTS ===================== */}
         {activeTab === 'products' && (
           <div>
@@ -2246,6 +2332,9 @@ export default function AdminConsolePage() {
             </div>
           </form>
         )}
+
+        {/* ===================== TAB 9: TEAM ===================== */}
+        {activeTab === 'team' && <TeamTab adminUser={adminUser} />}
       </main>
 
       {/* ===================== ADD / EDIT PRODUCT MODAL ===================== */}

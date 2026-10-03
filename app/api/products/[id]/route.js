@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import connectToDatabase from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Feedback from '@/models/Feedback';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 
 export async function GET(request, { params }) {
   try {
@@ -45,10 +45,8 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['products.manage']);
+    if (response) return response;
 
     await connectToDatabase();
     const { id } = await params;
@@ -91,10 +89,8 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['products.manage']);
+    if (response) return response;
 
     await connectToDatabase();
     const { id } = await params;

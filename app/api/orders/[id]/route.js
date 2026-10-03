@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import Order, { ORDER_STATUSES } from '@/models/Order';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 
 // PUT /api/orders/[id] — update an order's status (admin only)
 export async function PUT(request, { params }) {
-  const admin = getAdminFromRequest(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-  }
+  const { response } = await requirePermissions(request, ['orders.manage']);
+  if (response) return response;
 
   try {
     const { id } = await params;

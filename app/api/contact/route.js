@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import ContactMessage from '@/models/ContactMessage';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,10 +13,8 @@ const cap = (value, max) => String(value ?? '').trim().slice(0, max);
 // ---------------------------------------------------------------------------
 export async function GET(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['feedback.moderate']);
+    if (response) return response;
 
     await connectToDatabase();
     const messages = await ContactMessage.find({}).sort({ createdAt: -1 });
@@ -90,10 +88,8 @@ export async function POST(request) {
 // ---------------------------------------------------------------------------
 export async function PUT(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['feedback.moderate']);
+    if (response) return response;
 
     await connectToDatabase();
     const { messageId, read } = await request.json();
@@ -129,10 +125,8 @@ export async function PUT(request) {
 // ---------------------------------------------------------------------------
 export async function DELETE(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['feedback.moderate']);
+    if (response) return response;
 
     await connectToDatabase();
     const { searchParams } = new URL(request.url);

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import SiteSettings from '@/models/SiteSettings';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 
 const DEFAULT_SETTINGS = {
   siteName: 'Lets Organic',
@@ -68,10 +68,8 @@ export async function GET() {
 
 export async function PUT(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['settings.manage']);
+    if (response) return response;
 
     await connectToDatabase();
     const updateData = await request.json();

@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import Coupon from '@/models/Coupon';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 const ALLOWED_TYPES = ['percent', 'flat'];
 const UPDATABLE_FIELDS = ['value', 'minOrder', 'expiresAt', 'usageLimit'];
 
-function requireAdmin(request) {
-  const admin = getAdminFromRequest(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-  }
-  return null;
+async function requireAdmin(request) {
+  const { response } = await requirePermissions(request, ['coupons.manage']);
+  return response || null;
 }
 
 /** Seed the default ORGANIC25 coupon when the collection is empty. */
@@ -94,7 +91,7 @@ function validateCouponInput(data) {
 // GET /api/coupons — list coupons (admin only, newest first)
 // ---------------------------------------------------------------------------
 export async function GET(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   try {
@@ -113,7 +110,7 @@ export async function GET(request) {
 // POST /api/coupons — create a coupon (admin only)
 // ---------------------------------------------------------------------------
 export async function POST(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   // Light rate limit so a bad actor cannot spray coupon codes at the admin API
@@ -167,7 +164,7 @@ export async function POST(request) {
 // Body: { code, active?, value?, minOrder?, expiresAt?, usageLimit? }
 // ---------------------------------------------------------------------------
 export async function PUT(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   let body;
@@ -252,7 +249,7 @@ export async function PUT(request) {
 // DELETE /api/coupons?code=XXX — delete a coupon (admin only)
 // ---------------------------------------------------------------------------
 export async function DELETE(request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const { searchParams } = new URL(request.url);

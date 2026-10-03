@@ -3,7 +3,7 @@ import { getAdminFromRequest } from '@/lib/auth';
 
 export async function GET(request) {
   try {
-    const admin = getAdminFromRequest(request);
+    const admin = await getAdminFromRequest(request);
     if (!admin) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
@@ -13,6 +13,9 @@ export async function GET(request) {
       user: {
         id: admin.id,
         email: admin.email,
+        name: admin.name || '',
+        permissions: admin.permissions || [],
+        isOwner: !!admin.isOwner,
         role: admin.role,
       },
     });

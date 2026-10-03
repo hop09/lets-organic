@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import Product from '@/models/Product';
-import { getAdminFromRequest } from '@/lib/auth';
+import { requirePermissions } from '@/lib/auth';
 import { products as initialProducts } from '@/data/products';
 
 // Helper to auto-seed initial products if database is empty
@@ -114,10 +114,8 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const admin = getAdminFromRequest(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
-    }
+    const { response } = await requirePermissions(request, ['products.manage']);
+    if (response) return response;
 
     await connectToDatabase();
     const data = await request.json();
