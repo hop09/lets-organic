@@ -35,9 +35,16 @@ export default function ProductDetailClient({ id }) {
   const router = useRouter();
   const slugOrId = id;
 
-  // Real-time product from MongoDB
+  // Real-time product from MongoDB.
+  // IMPORTANT: start with NO product (not the static seed product).
+  // Previously the page first rendered the seed product (e.g. Aromatherapy
+  // Gift Set images) and then swapped to the real DB product after the
+  // fetch — so visitors saw one set of images on load and a different set
+  // a moment later. Now we show a loading state until the real product
+  // arrives; the seed data is only a last-resort fallback if the API
+  // request itself fails.
   const fallbackProd = useMemo(() => getProductBySlug(slugOrId), [slugOrId]);
-  const [product, setProduct] = useState(fallbackProd);
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Reviews from MongoDB
@@ -67,11 +74,12 @@ export default function ProductDetailClient({ id }) {
   const { isWishlisted, toggleItem } = useWishlist();
   const { settings } = useSettings();
 
-  // 1. Fetch dynamic product data from MongoDB
+  // 1. Fetch dynamic product data from MongoDB (always fresh — never a
+  // cached API response, so edited images/description show immediately).
   useEffect(() => {
     async function fetchProductData() {
       try {
-        const res = await fetch(`/api/products/${slugOrId}`);
+        const res = await fetch(`/api/products/${slugOrId}`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.product) {
@@ -79,16 +87,23 @@ export default function ProductDetailClient({ id }) {
             if (data.reviews) {
               setApprovedReviews(data.reviews);
             }
+          } else {
+            // API answered but has no such product: fall back to seed data
+            // (or stay null → "not found") instead of swapping mid-load.
+            setProduct(fallbackProd || null);
           }
+        } else {
+          setProduct(fallbackProd || null);
         }
       } catch (err) {
         console.warn('Using local fallback product:', err);
+        setProduct(fallbackProd || null);
       } finally {
         setLoading(false);
       }
     }
     fetchProductData();
-  }, [slugOrId]);
+  }, [slugOrId, fallbackProd]);
 
   // 2. Fetch approved feedback
   useEffect(() => {
@@ -162,7 +177,15 @@ export default function ProductDetailClient({ id }) {
     );
   }
 
-  if (!product) return null;
+  // While the real product loads, show a loading state — never the seed
+  // product — so images never swap from one product to another mid-load.
+  if (!product) {
+    return (
+      <div className={styles.notFound}>
+        <p>Loading product…</p>
+      </div>
+    );
+  }
 
   const wishlisted = isWishlisted(product._id || product.id || product.slug);
 
