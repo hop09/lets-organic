@@ -129,6 +129,7 @@ export default function AdminConsolePage() {
     badge: '',
     description: '',
     featuresText: '',
+    benefitsText: '',
     tagsText: 'Organic',
     images: [],
     videos: [],
@@ -541,6 +542,7 @@ export default function AdminConsolePage() {
         badge: prod.badge || '',
         description: prod.description || '',
         featuresText: (prod.features || []).join('\n'),
+        benefitsText: (prod.benefits || []).join('\n'),
         tagsText: (prod.tags || []).join(', '),
         images: [...(prod.images || [])],
         videos: [...(prod.videos || [])],
@@ -558,6 +560,7 @@ export default function AdminConsolePage() {
         badge: '',
         description: '',
         featuresText: '100% Certified Organic Ingredients\nCold-Pressed Extraction\nCruelty-Free & Vegan',
+        benefitsText: '',
         tagsText: 'Organic, Natural, Clean',
         images: ['https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop'],
         videos: [],
@@ -619,6 +622,7 @@ export default function AdminConsolePage() {
       badge: productForm.badge,
       description: productForm.description,
       features: productForm.featuresText.split('\n').map(s => s.trim()).filter(Boolean),
+      benefits: productForm.benefitsText.split('\n').map(s => s.trim()).filter(Boolean),
       tags: productForm.tagsText.split(',').map(s => s.trim()).filter(Boolean),
       images: productForm.images,
       videos: productForm.videos,
@@ -2276,6 +2280,16 @@ export default function AdminConsolePage() {
                     value={productForm.featuresText}
                     onChange={(e) => setProductForm({ ...productForm, featuresText: e.target.value })}
                     placeholder="100% pure organic cold-pressed&#10;Rich in antioxidants & vitamins&#10;Chemical and pesticide free"
+                  />
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                  <label>Product Benefits (one per line — add as many as you like)</label>
+                  <textarea
+                    className={`${styles.formInput} ${styles.textarea}`}
+                    value={productForm.benefitsText}
+                    onChange={(e) => setProductForm({ ...productForm, benefitsText: e.target.value })}
+                    placeholder="Deeply nourishes and hydrates skin&#10;Reduces the appearance of fine lines&#10;Calms redness and irritation"
                   />
                 </div>
               </div>

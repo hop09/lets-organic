@@ -23,6 +23,7 @@ async function seedInitialProductsIfEmpty() {
       badge: p.badge || (index === 0 ? 'Featured' : ''),
       description: p.description,
       features: p.features || [],
+      benefits: p.benefits || [],
       inStock: p.inStock !== false,
       stockCount: 50,
       isHero: index === 0, // Set first product (Rosehip Face Oil) as hero spotlight
@@ -145,6 +146,7 @@ export async function POST(request) {
       images: Array.isArray(data.images) ? data.images : (data.images ? [data.images] : []),
       videos: Array.isArray(data.videos) ? data.videos : (data.videos ? [data.videos] : []),
       features: Array.isArray(data.features) ? data.features : [],
+      benefits: Array.isArray(data.benefits) ? data.benefits : [],
       tags: Array.isArray(data.tags) ? data.tags : ['Organic'],
     });
 

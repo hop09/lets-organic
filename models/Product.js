@@ -64,6 +64,10 @@ const ProductSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    benefits: {
+      type: [String],
+      default: [],
+    },
     inStock: {
       type: Boolean,
       default: true,

@@ -170,6 +170,12 @@ export default function ProductDetailClient({ id }) {
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0;
 
+  // Benefits added from the admin panel (unlimited list, one per line).
+  // Shown only when the product actually has benefits.
+  const benefits = Array.isArray(product?.benefits)
+    ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
+    : [];
+
   const handleAddToCart = () => {
     addItem(product, quantity);
     setAddedToCart(true);
@@ -457,6 +463,31 @@ export default function ProductDetailClient({ id }) {
           </div>
         </div>
       </section>
+
+      {/* Benefits — shown below the product when the admin added any */}
+      {benefits.length > 0 && (
+        <section className="container-wide">
+          <div className={styles.benefitsSection}>
+            <div className={styles.benefitsHeading}>
+              <span className={styles.benefitsIcon}>
+                <Sparkles size={20} />
+              </span>
+              <div>
+                <h2 className={styles.benefitsTitle}>Key Benefits</h2>
+                <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
+              </div>
+            </div>
+            <ul className={styles.benefitsList}>
+              {benefits.map((benefit, i) => (
+                <li key={i} className={styles.benefitItem}>
+                  <span className={styles.benefitDot} aria-hidden="true" />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* Tabs */}
       <section className="section">
