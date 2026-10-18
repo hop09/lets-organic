@@ -206,11 +206,21 @@ export default function ProductDetailClient({ id }) {
   }
 
   // Benefits added from the admin panel (unlimited list, one per line).
-  // Shown only when the product actually has benefits.
+  // Format per line: "Title | Detail" — Title becomes the clickable heading,
+  // Detail shows inside the popup (falls back to Title when omitted).
   // NOTE: must be declared BEFORE benefitHeadingsList/benefitModal use it.
-  const benefits = Array.isArray(product?.benefits)
-    ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
-    : [];
+  const benefits = useMemo(() => {
+    const list = Array.isArray(product?.benefits)
+      ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
+      : [];
+    return list.map((b) => {
+      const idx = b.indexOf('|');
+      if (idx > 0) {
+        return { title: b.slice(0, idx).trim(), detail: b.slice(idx + 1).trim() };
+      }
+      return { title: b.trim(), detail: '' };
+    });
+  }, [product?.benefits]);
 
   // Shared benefit pieces — used in the product overview AND the standalone
   // benefits section. Headings open the same popup.
@@ -224,7 +234,7 @@ export default function ProductDetailClient({ id }) {
             onClick={() => setBenefitIndex(i)}
           >
             <span className={styles.benefitNum} aria-hidden="true">{i + 1}</span>
-            <span className={styles.benefitHeadingText}>{benefit}</span>
+            <span className={styles.benefitHeadingText}>{benefit.title}</span>
             <ChevronRight size={18} className={styles.benefitChevron} aria-hidden="true" />
           </button>
         </li>
@@ -255,7 +265,10 @@ export default function ProductDetailClient({ id }) {
         <p className={styles.benefitModalKicker}>
           Benefit {benefitIndex + 1} of {benefits.length}
         </p>
-        <p className={styles.benefitModalText}>{benefits[benefitIndex]}</p>
+        <h3 className={styles.benefitModalTitle}>{benefits[benefitIndex].title}</h3>
+        <p className={styles.benefitModalText}>
+          {benefits[benefitIndex].detail || benefits[benefitIndex].title}
+        </p>
         <div className={styles.benefitModalNav}>
           <button
             type="button"

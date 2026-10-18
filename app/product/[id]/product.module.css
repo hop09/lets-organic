@@ -567,6 +567,13 @@
   text-transform: uppercase;
   font-size: 0.78rem;
   letter-spacing: 0.06em;
+  margin: 0 0 var(--space-sm);
+}
+
+.benefitModalTitle {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--text);
   margin: 0 0 var(--space-md);
 }
 

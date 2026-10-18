@@ -2284,13 +2284,16 @@ export default function AdminConsolePage() {
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label>Product Benefits (one per line — add as many as you like)</label>
+                  <label>Product Benefits (one per line — format: Title | Detail)</label>
                   <textarea
                     className={`${styles.formInput} ${styles.textarea}`}
                     value={productForm.benefitsText}
                     onChange={(e) => setProductForm({ ...productForm, benefitsText: e.target.value })}
-                    placeholder="Deeply nourishes and hydrates skin&#10;Reduces the appearance of fine lines&#10;Calms redness and irritation"
+                    placeholder="Naturally whitens teeth | Gently polishes away surface stains without harsh chemicals&#10;Strengthens enamel | Mineral-rich ingredients help protect tooth enamel&#10;Freshens breath | Natural mint and herbal oils"
                   />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted, #666)', marginTop: '6px' }}>
+                    The <strong>Title</strong> becomes the clickable heading on the product page; the <strong>Detail</strong> shows inside the popup. Detail is optional — a line without &quot; | &quot; shows as-is.
+                  </p>
                 </div>
               </div>
 
