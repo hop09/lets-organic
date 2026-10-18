@@ -476,6 +476,151 @@
   flex-shrink: 0;
 }
 
+/* Benefits tab — clickable headings, each opens the benefit popup */
+.benefitHeadings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.benefitHeadingBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--surface);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition-base), transform var(--transition-base);
+}
+
+.benefitHeadingBtn:hover {
+  border-color: var(--primary);
+}
+
+.benefitHeadingBtn:active {
+  transform: scale(0.99);
+}
+
+.benefitNum {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.benefitHeadingText {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.benefitChevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* Benefit popup (modal) */
+.benefitModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.benefitModal {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  padding-top: calc(var(--space-2xl) + var(--space-sm));
+  max-width: 480px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.benefitModalClose {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-base), background var(--transition-base);
+}
+
+.benefitModalClose:hover {
+  color: var(--text);
+  background: var(--primary-light);
+}
+
+.benefitModalKicker {
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  margin: 0 0 var(--space-md);
+}
+
+.benefitModalText {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0 0 var(--space-xl);
+}
+
+.benefitModalNav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.benefitModalNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.benefitModalNavBtn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
 .featuresList {
   display: flex;
   flex-direction: column;

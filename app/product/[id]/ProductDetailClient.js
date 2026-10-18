@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Sparkles,
   AlertCircle,
+  X,
 } from 'lucide-react';
 import { getProductBySlug, getProductsByCategory } from '@/data/products';
 import { useCart } from '@/context/CartContext';
@@ -46,6 +47,23 @@ export default function ProductDetailClient({ id }) {
   const fallbackProd = useMemo(() => getProductBySlug(slugOrId), [slugOrId]);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Benefit popup: null = closed, number = index of the benefit being shown
+  const [benefitIndex, setBenefitIndex] = useState(null);
+
+  // Close the benefit popup on Escape + lock body scroll while it's open
+  useEffect(() => {
+    if (benefitIndex === null) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setBenefitIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [benefitIndex]);
 
   // Reviews from MongoDB
   const [approvedReviews, setApprovedReviews] = useState([]);
@@ -616,7 +634,8 @@ export default function ProductDetailClient({ id }) {
                 </div>
               )}
     
-              {/* TAB: BENEFITS */}
+              {/* TAB: BENEFITS — each benefit is a clickable heading;
+                  tapping one opens a popup, browsable prev/next */}
               {activeTab === 'benefits' && benefits.length > 0 && (
                 <div>
                   <div className={styles.benefitsHeading}>
@@ -625,17 +644,73 @@ export default function ProductDetailClient({ id }) {
                     </span>
                     <div>
                       <h3 className={styles.benefitsTitle}>Key Benefits</h3>
-                      <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
+                      <p className={styles.benefitsSubtitle}>Tap a benefit to read more</p>
                     </div>
                   </div>
-                  <ul className={styles.benefitsList}>
+                  <ul className={styles.benefitHeadings}>
                     {benefits.map((benefit, i) => (
-                      <li key={i} className={styles.benefitItem}>
-                        <span className={styles.benefitDot} aria-hidden="true" />
-                        <span>{benefit}</span>
+                      <li key={i}>
+                        <button
+                          type="button"
+                          className={styles.benefitHeadingBtn}
+                          onClick={() => setBenefitIndex(i)}
+                        >
+                          <span className={styles.benefitNum} aria-hidden="true">{i + 1}</span>
+                          <span className={styles.benefitHeadingText}>{benefit}</span>
+                          <ChevronRight size={18} className={styles.benefitChevron} aria-hidden="true" />
+                        </button>
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* BENEFIT POPUP — shows one benefit at a time, prev/next to browse */}
+              {benefitIndex !== null && benefits.length > 0 && (
+                <div
+                  className={styles.benefitModalOverlay}
+                  onClick={() => setBenefitIndex(null)}
+                >
+                  <div
+                    className={styles.benefitModal}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Benefit ${benefitIndex + 1} of ${benefits.length}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className={styles.benefitModalClose}
+                      onClick={() => setBenefitIndex(null)}
+                      aria-label="Close"
+                    >
+                      <X size={20} />
+                    </button>
+                    <p className={styles.benefitModalKicker}>
+                      Benefit {benefitIndex + 1} of {benefits.length}
+                    </p>
+                    <p className={styles.benefitModalText}>{benefits[benefitIndex]}</p>
+                    <div className={styles.benefitModalNav}>
+                      <button
+                        type="button"
+                        className={styles.benefitModalNavBtn}
+                        onClick={() => setBenefitIndex((benefitIndex - 1 + benefits.length) % benefits.length)}
+                        aria-label="Previous benefit"
+                      >
+                        <ChevronLeft size={18} aria-hidden="true" />
+                        <span>Prev</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.benefitModalNavBtn}
+                        onClick={() => setBenefitIndex((benefitIndex + 1) % benefits.length)}
+                        aria-label="Next benefit"
+                      >
+                        <span>Next</span>
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
     
