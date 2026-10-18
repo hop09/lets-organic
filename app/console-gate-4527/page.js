@@ -129,7 +129,7 @@ export default function AdminConsolePage() {
     badge: '',
     description: '',
     featuresText: '',
-    benefitsText: '',
+    benefits: [],
     tagsText: 'Organic',
     images: [],
     videos: [],
@@ -542,7 +542,7 @@ export default function AdminConsolePage() {
         badge: prod.badge || '',
         description: prod.description || '',
         featuresText: (prod.features || []).join('\n'),
-        benefitsText: (prod.benefits || []).join('\n'),
+        benefits: normalizeBenefits(prod.benefits),
         tagsText: (prod.tags || []).join(', '),
         images: [...(prod.images || [])],
         videos: [...(prod.videos || [])],
@@ -560,7 +560,7 @@ export default function AdminConsolePage() {
         badge: '',
         description: '',
         featuresText: '100% Certified Organic Ingredients\nCold-Pressed Extraction\nCruelty-Free & Vegan',
-        benefitsText: '',
+        benefits: [],
         tagsText: 'Organic, Natural, Clean',
         images: ['https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop'],
         videos: [],
@@ -595,6 +595,63 @@ export default function AdminConsolePage() {
     setProductForm({ ...productForm, images: [...productForm.images, url.trim()] });
   };
 
+  // Normalizes benefits from the DB/API into {title, detail, image} objects.
+  // Accepts objects, legacy "Title | Detail" strings, or plain strings.
+  const normalizeBenefits = (raw) => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((b) => {
+        if (typeof b === 'string') {
+          const t = b.trim();
+          const idx = t.indexOf('|');
+          if (idx > 0)
+            return { title: t.slice(0, idx).trim(), detail: t.slice(idx + 1).trim(), image: '' };
+          return { title: t, detail: '', image: '' };
+        }
+        if (b && typeof b === 'object')
+          return {
+            title: String(b.title || ''),
+            detail: String(b.detail || ''),
+            image: String(b.image || ''),
+          };
+        return null;
+      })
+      .filter((b) => b && (b.title || b.detail));
+  };
+
+  // Adds a new empty benefit entry (title + detail + image).
+  const addBenefit = () => {
+    setProductForm({
+      ...productForm,
+      benefits: [...productForm.benefits, { title: '', detail: '', image: '' }],
+    });
+  };
+
+  // Updates one field of one benefit entry.
+  const updateBenefit = (index, field, value) => {
+    const list = productForm.benefits.map((b, i) =>
+      i === index ? { ...b, [field]: value } : b
+    );
+    setProductForm({ ...productForm, benefits: list });
+  };
+
+  // Removes a benefit entry.
+  const removeBenefit = (index) => {
+    setProductForm({
+      ...productForm,
+      benefits: productForm.benefits.filter((_, i) => i !== index),
+    });
+  };
+
+  // Moves a benefit entry up/down in display order.
+  const moveBenefit = (index, dir) => {
+    const list = [...productForm.benefits];
+    const j = index + dir;
+    if (j < 0 || j >= list.length) return;
+    [list[index], list[j]] = [list[j], list[index]];
+    setProductForm({ ...productForm, benefits: list });
+  };
+
   const addVideo = () => {
     if (!newVideoUrl.trim()) return;
     setProductForm({ ...productForm, videos: [...productForm.videos, newVideoUrl.trim()] });
@@ -622,7 +679,13 @@ export default function AdminConsolePage() {
       badge: productForm.badge,
       description: productForm.description,
       features: productForm.featuresText.split('\n').map(s => s.trim()).filter(Boolean),
-      benefits: productForm.benefitsText.split('\n').map(s => s.trim()).filter(Boolean),
+      benefits: productForm.benefits
+        .map((b) => ({
+          title: (b.title || '').trim(),
+          detail: (b.detail || '').trim(),
+          image: (b.image || '').trim(),
+        }))
+        .filter((b) => b.title || b.detail),
       tags: productForm.tagsText.split(',').map(s => s.trim()).filter(Boolean),
       images: productForm.images,
       videos: productForm.videos,
@@ -2283,18 +2346,126 @@ export default function AdminConsolePage() {
                   />
                 </div>
 
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label>Product Benefits (one per line — format: Title | Detail)</label>
-                  <textarea
-                    className={`${styles.formInput} ${styles.textarea}`}
-                    value={productForm.benefitsText}
-                    onChange={(e) => setProductForm({ ...productForm, benefitsText: e.target.value })}
-                    placeholder="Naturally whitens teeth | Gently polishes away surface stains without harsh chemicals&#10;Strengthens enamel | Mineral-rich ingredients help protect tooth enamel&#10;Freshens breath | Natural mint and herbal oils"
-                  />
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted, #666)', marginTop: '6px' }}>
-                    The <strong>Title</strong> becomes the clickable heading on the product page; the <strong>Detail</strong> shows inside the popup. Detail is optional — a line without &quot; | &quot; shows as-is.
-                  </p>
+              </div>
+
+              {/* --- PRODUCT BENEFITS MANAGER --- */}
+              <div className={styles.mediaSection}>
+                <div className={styles.mediaSectionTitle}>
+                  <Sparkles size={16} color="#79A36E" />
+                  <span>Product Benefits (clickable headings with popups)</span>
                 </div>
+                <p style={{ fontSize: '0.8125rem', color: '#8C9988', marginBottom: '0.75rem' }}>
+                  Each benefit shows as a clickable heading on the product page — tapping it opens a popup with the detail and image. Add as many as you like; use the arrows to reorder.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {productForm.benefits.map((b, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        border: '1px solid var(--border, #e5e7eb)',
+                        borderRadius: '10px',
+                        padding: '0.9rem',
+                        background: 'var(--surface, #fafafa)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            background: '#79A36E',
+                            color: '#fff',
+                            borderRadius: '999px',
+                            padding: '2px 10px',
+                          }}
+                        >
+                          Benefit {i + 1}
+                        </span>
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => moveBenefit(i, -1)}
+                            disabled={i === 0}
+                            className={styles.iconBtn}
+                            title="Move up"
+                          >
+                            <ArrowUp size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveBenefit(i, 1)}
+                            disabled={i === productForm.benefits.length - 1}
+                            className={styles.iconBtn}
+                            title="Move down"
+                          >
+                            <ArrowDown size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeBenefit(i)}
+                            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                            title="Remove benefit"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={styles.formGroup} style={{ marginBottom: '0.6rem' }}>
+                        <label>Title (clickable heading)</label>
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          value={b.title}
+                          onChange={(e) => updateBenefit(i, 'title', e.target.value)}
+                          placeholder="e.g. Naturally whitens teeth"
+                        />
+                      </div>
+
+                      <div className={styles.formGroup} style={{ marginBottom: '0.6rem' }}>
+                        <label>Detail (shown inside the popup)</label>
+                        <textarea
+                          className={`${styles.formInput} ${styles.textarea}`}
+                          value={b.detail}
+                          onChange={(e) => updateBenefit(i, 'detail', e.target.value)}
+                          placeholder="e.g. Gently polishes away surface stains without harsh chemicals"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                        <label>Benefit image (shown in the popup)</label>
+                        <ImageUploader
+                          value={b.image || ''}
+                          onChange={(url) => updateBenefit(i, 'image', url)}
+                          label="Upload or paste an image URL"
+                          canUpload={canUpload}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addBenefit}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.6rem 1.1rem',
+                    borderRadius: '8px',
+                    border: '1px dashed #79A36E',
+                    background: 'transparent',
+                    color: '#79A36E',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={16} />
+                  Add Benefit
+                </button>
               </div>
 
               {/* --- IMAGE REORDERING & CAROUSEL MANAGER --- */}

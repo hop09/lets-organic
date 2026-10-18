@@ -146,7 +146,32 @@ export async function POST(request) {
       images: Array.isArray(data.images) ? data.images : (data.images ? [data.images] : []),
       videos: Array.isArray(data.videos) ? data.videos : (data.videos ? [data.videos] : []),
       features: Array.isArray(data.features) ? data.features : [],
-      benefits: Array.isArray(data.benefits) ? data.benefits : [],
+      // Normalize benefits: accept objects {title, detail, image} or legacy strings
+      // ("Title | Detail" or plain) and store as objects.
+      benefits: Array.isArray(data.benefits)
+        ? data.benefits
+            .map((b) => {
+              if (typeof b === 'string') {
+                const t = b.trim();
+                const idx = t.indexOf('|');
+                if (idx > 0)
+                  return {
+                    title: t.slice(0, idx).trim(),
+                    detail: t.slice(idx + 1).trim(),
+                    image: '',
+                  };
+                return { title: t, detail: '', image: '' };
+              }
+              if (b && typeof b === 'object')
+                return {
+                  title: String(b.title || '').trim(),
+                  detail: String(b.detail || '').trim(),
+                  image: String(b.image || '').trim(),
+                };
+              return null;
+            })
+            .filter((b) => b && (b.title || b.detail))
+        : [],
       tags: Array.isArray(data.tags) ? data.tags : ['Organic'],
     });
 

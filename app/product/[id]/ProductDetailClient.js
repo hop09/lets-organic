@@ -205,23 +205,37 @@ export default function ProductDetailClient({ id }) {
     );
   }
 
-  // Benefits added from the admin panel (unlimited list, one per line).
-  // Format per line: "Title | Detail" — Title becomes the clickable heading,
-  // Detail shows inside the popup (falls back to Title when omitted).
+  // Benefits added from the admin panel via the "Add Benefit" button.
+  // Each benefit: { title, detail, image } — Title becomes the clickable
+  // heading, Detail + Image show inside the popup. Legacy string entries
+  // ("Title | Detail" or plain) are still accepted.
   // NOTE: must be declared BEFORE benefitHeadingsList/benefitModal use it,
   // and as a plain const (NOT a hook) because early returns above would make
   // a hook call conditional, which crashes React.
   const benefits = (() => {
     const list = Array.isArray(product?.benefits)
-      ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
+      ? product.benefits.filter(Boolean)
       : [];
-    return list.map((b) => {
-      const idx = b.indexOf('|');
-      if (idx > 0) {
-        return { title: b.slice(0, idx).trim(), detail: b.slice(idx + 1).trim() };
-      }
-      return { title: b.trim(), detail: '' };
-    });
+    return list
+      .map((b) => {
+        if (typeof b === 'string') {
+          const t = b.trim();
+          const idx = t.indexOf('|');
+          if (idx > 0)
+            return {
+              title: t.slice(0, idx).trim(),
+              detail: t.slice(idx + 1).trim(),
+              image: '',
+            };
+          return { title: t, detail: '', image: '' };
+        }
+        return {
+          title: String(b.title || '').trim(),
+          detail: String(b.detail || '').trim(),
+          image: String(b.image || '').trim(),
+        };
+      })
+      .filter((b) => b.title || b.detail);
   })();
 
   // Shared benefit pieces — used in the product overview AND the standalone
@@ -235,7 +249,16 @@ export default function ProductDetailClient({ id }) {
             className={styles.benefitHeadingBtn}
             onClick={() => setBenefitIndex(i)}
           >
-            <span className={styles.benefitNum} aria-hidden="true">{i + 1}</span>
+            {benefit.image ? (
+              <img
+                src={benefit.image}
+                alt=""
+                className={styles.benefitThumb}
+                loading="lazy"
+              />
+            ) : (
+              <span className={styles.benefitNum} aria-hidden="true">{i + 1}</span>
+            )}
             <span className={styles.benefitHeadingText}>{benefit.title}</span>
             <ChevronRight size={18} className={styles.benefitChevron} aria-hidden="true" />
           </button>
@@ -267,6 +290,13 @@ export default function ProductDetailClient({ id }) {
         <p className={styles.benefitModalKicker}>
           Benefit {benefitIndex + 1} of {benefits.length}
         </p>
+        {benefits[benefitIndex].image && (
+          <img
+            src={benefits[benefitIndex].image}
+            alt={benefits[benefitIndex].title}
+            className={styles.benefitModalImage}
+          />
+        )}
         <h3 className={styles.benefitModalTitle}>{benefits[benefitIndex].title}</h3>
         <p className={styles.benefitModalText}>
           {benefits[benefitIndex].detail || benefits[benefitIndex].title}

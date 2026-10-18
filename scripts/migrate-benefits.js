@@ -1,21 +1,19 @@
 /**
- * One-time backfill: add `benefits` to existing products in MongoDB
- * that don't have any yet.
+ * One-time migration: convert legacy string `benefits` to objects.
  *
- * - Only touches products where benefits is missing or an empty array.
- * - Never overwrites benefits an admin already added.
- * - Benefits come from the same seed data the app uses (data/products.js),
- *   so code + database stay in sync.
+ * Old format:  benefits: ["Naturally whitens teeth", "Title | Detail", ...]
+ * New format:  benefits: [{ title, detail, image }, ...]
+ *
+ * - Only touches products whose benefits contain string entries.
+ * - Products already using objects are skipped (never overwritten).
+ * - "Title | Detail" strings are split; plain strings become title-only.
+ * - Safe to run multiple times.
  *
  * Usage (from the repo root, with your real connection string):
  *   MONGODB_URI="mongodb+srv://..." node scripts/migrate-benefits.js
- *
- * Requires MONGODB_URI in the environment (same value as .env.local).
- * Safe to run multiple times — already-filled products are skipped.
  */
 
 import mongoose from 'mongoose';
-import { products as seedProducts } from '../data/products.js';
 
 const { MONGODB_URI } = process.env;
 
@@ -25,42 +23,55 @@ if (!MONGODB_URI) {
 }
 
 // Minimal inline schema: only the fields this migration needs.
-// (Keeps the script independent of the app's model registry.)
 const ProductSchema = new mongoose.Schema(
-  { slug: String, benefits: { type: [String], default: [] } },
+  { slug: String, benefits: { type: mongoose.Schema.Types.Mixed, default: [] } },
   { strict: false, timestamps: false }
 );
 const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+
+function toObject(b) {
+  if (typeof b === 'string') {
+    const t = b.trim();
+    const idx = t.indexOf('|');
+    if (idx > 0)
+      return { title: t.slice(0, idx).trim(), detail: t.slice(idx + 1).trim(), image: '' };
+    return { title: t, detail: '', image: '' };
+  }
+  if (b && typeof b === 'object')
+    return {
+      title: String(b.title || '').trim(),
+      detail: String(b.detail || '').trim(),
+      image: String(b.image || '').trim(),
+    };
+  return null;
+}
 
 async function main() {
   await mongoose.connect(MONGODB_URI);
   console.log('Connected to MongoDB.');
 
-  let updated = 0;
+  let converted = 0;
   let skipped = 0;
-  let notInSeed = 0;
 
   const dbProducts = await Product.find({}).select('slug benefits').lean();
   for (const dbProduct of dbProducts) {
-    const seed = seedProducts.find((p) => p.slug === dbProduct.slug);
-    if (!seed) {
-      notInSeed++;
-      console.log(`- SKIP (not in seed data): ${dbProduct.slug}`);
+    const benefits = dbProduct.benefits;
+    if (!Array.isArray(benefits) || benefits.length === 0) {
+      skipped++;
       continue;
     }
-    if (Array.isArray(dbProduct.benefits) && dbProduct.benefits.length > 0) {
+    const hasStrings = benefits.some((b) => typeof b === 'string');
+    if (!hasStrings) {
       skipped++;
-      continue; // Admin already set benefits — never overwrite.
+      continue; // Already objects — never touch.
     }
-    await Product.updateOne(
-      { _id: dbProduct._id },
-      { $set: { benefits: seed.benefits || [] } }
-    );
-    updated++;
-    console.log(`+ UPDATED: ${dbProduct.slug} (${(seed.benefits || []).length} benefits)`);
+    const normalized = benefits.map(toObject).filter((b) => b && (b.title || b.detail));
+    await Product.updateOne({ _id: dbProduct._id }, { $set: { benefits: normalized } });
+    converted++;
+    console.log(`+ CONVERTED: ${dbProduct.slug} (${normalized.length} benefits)`);
   }
 
-  console.log(`\nDone. Updated: ${updated} | Already had benefits (skipped): ${skipped} | Not in seed (skipped): ${notInSeed}`);
+  console.log(`\nDone. Converted: ${converted} | Skipped (already objects/empty): ${skipped}`);
   await mongoose.disconnect();
 }
 

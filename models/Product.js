@@ -64,8 +64,16 @@ const ProductSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Each benefit: clickable heading (title) + popup content (detail) + optional image.
+    // Old string entries are normalized to objects by the API/migration.
     benefits: {
-      type: [String],
+      type: [
+        {
+          title: { type: String, default: '' },
+          detail: { type: String, default: '' },
+          image: { type: String, default: '' },
+        },
+      ],
       default: [],
     },
     inStock: {
