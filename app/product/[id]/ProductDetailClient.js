@@ -487,31 +487,6 @@ export default function ProductDetailClient({ id }) {
         </div>
       </section>
 
-      {/* Benefits — shown below the product when the admin added any */}
-      {benefits.length > 0 && (
-        <section className="container-wide">
-          <div className={styles.benefitsSection}>
-            <div className={styles.benefitsHeading}>
-              <span className={styles.benefitsIcon}>
-                <Sparkles size={20} />
-              </span>
-              <div>
-                <h2 className={styles.benefitsTitle}>Key Benefits</h2>
-                <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
-              </div>
-            </div>
-            <ul className={styles.benefitsList}>
-              {benefits.map((benefit, i) => (
-                <li key={i} className={styles.benefitItem}>
-                  <span className={styles.benefitDot} aria-hidden="true" />
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
       {/* Tabs */}
       <section className="section">
         <div className="container-wide">
@@ -526,8 +501,17 @@ export default function ProductDetailClient({ id }) {
               className={`${styles.tab} ${activeTab === 'description' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('description')}
             >
-              Description & Benefits
+              Description
             </button>
+            {/* Benefits tab — shown only when the admin added benefits */}
+            {benefits.length > 0 && (
+              <button
+                className={`${styles.tab} ${activeTab === 'benefits' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('benefits')}
+              >
+                Benefits ({benefits.length})
+              </button>
+            )}
             <button
               className={`${styles.tab} ${activeTab === 'features' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('features')}
@@ -743,6 +727,29 @@ export default function ProductDetailClient({ id }) {
                     <p>Our products are sourced from certified organic farms and producers, ensuring you get the purest, most natural ingredients without harmful chemicals or synthetic pesticides.</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* TAB: BENEFITS */}
+            {activeTab === 'benefits' && benefits.length > 0 && (
+              <div>
+                <div className={styles.benefitsHeading}>
+                  <span className={styles.benefitsIcon}>
+                    <Sparkles size={20} />
+                  </span>
+                  <div>
+                    <h3 className={styles.benefitsTitle}>Key Benefits</h3>
+                    <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
+                  </div>
+                </div>
+                <ul className={styles.benefitsList}>
+                  {benefits.map((benefit, i) => (
+                    <li key={i} className={styles.benefitItem}>
+                      <span className={styles.benefitDot} aria-hidden="true" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

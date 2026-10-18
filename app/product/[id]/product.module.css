@@ -382,15 +382,7 @@
   margin: 0;
 }
 
-/* Benefits showcase — shown below the product when benefits exist */
-.benefitsSection {
-  background: var(--surface);
-  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
-  border-radius: var(--radius-xl);
-  padding: var(--space-xl);
-  margin-bottom: var(--space-2xl);
-}
-
+/* Benefits tab — heading styles shared by the Benefits tab content */
 .benefitsHeading {
   display: flex;
   align-items: center;
