@@ -45,14 +45,29 @@
 
 /* Tabs block lives between the gallery and the product info inside
    productMain: on mobile (single column) it sits right below the image
-   slider; on desktop it spans the full width under gallery + info. */
+   slider; on desktop it spans the full width under gallery + info.
+   Explicit placement keeps gallery/info side-by-side on desktop instead
+   of the grid auto-placement pushing info into the left column. */
 .tabsBlock {
   margin-top: var(--space-md);
+  min-width: 0;
 }
 
 @media (min-width: 1025px) {
+  .gallery {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .productInfo {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
   .tabsBlock {
     grid-column: 1 / -1;
+    grid-row: 2;
   }
 }
 
