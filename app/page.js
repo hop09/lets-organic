@@ -25,6 +25,7 @@ import {
   Plus,
   Zap,
   Heart,
+  X,
 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import SafeImage from '@/components/SafeImage/SafeImage';
@@ -108,6 +109,34 @@ export default function HomePage() {
   const { isWishlisted, toggleItem } = useWishlist();
   const [activeHeroImgIdx, setActiveHeroImgIdx] = useState(0);
   const [heroQty, setHeroQty] = useState(1);
+  // Hero feature popup: null = closed, number = index of the feature shown
+  const [heroFeatureIndex, setHeroFeatureIndex] = useState(null);
+
+  // Split hero features ("Title — detail") into clickable headings + popup detail
+  const heroFeatures = useMemo(() => {
+    const list = heroProduct?.features?.length > 0 ? heroProduct.features.slice(0, 4) : [];
+    return list.map((f) => {
+      const parts = String(f).split(/\s—\s/);
+      return parts.length > 1
+        ? { title: parts[0].trim(), detail: parts.slice(1).join(' — ').trim() }
+        : { title: String(f).trim(), detail: '' };
+    });
+  }, [heroProduct]);
+
+  // Close the hero feature popup on Escape + lock body scroll while open
+  useEffect(() => {
+    if (heroFeatureIndex === null) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setHeroFeatureIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [heroFeatureIndex]);
 
   const copyCouponCode = (code) => {
     navigator.clipboard.writeText(code);
@@ -273,13 +302,18 @@ export default function HomePage() {
                     'Handcrafted from cold-pressed certified organic botanicals. Deeply nourishes and revitalizes your skin with potent natural antioxidants and vitamins.'}
                 </p>
 
-                {/* Feature tags */}
-                {heroProduct.features && heroProduct.features.length > 0 && (
+                {/* Feature tags — clickable headings, each opens a detail popup */}
+                {heroFeatures.length > 0 && (
                   <div className={styles.heroFeatureChips}>
-                    {heroProduct.features.slice(0, 4).map((f, i) => (
-                      <span key={i} className={styles.heroChip}>
-                        <Check size={12} /> {f}
-                      </span>
+                    {heroFeatures.map((f, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={styles.heroChip}
+                        onClick={() => setHeroFeatureIndex(i)}
+                      >
+                        <Check size={12} /> {f.title}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -699,6 +733,62 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Hero feature popup — one feature at a time, prev/next to browse */}
+      {heroFeatureIndex !== null && heroFeatures.length > 0 && (
+        <div
+          className={styles.heroFeatureModalOverlay}
+          onClick={() => setHeroFeatureIndex(null)}
+        >
+          <div
+            className={styles.heroFeatureModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${heroFeatures[heroFeatureIndex].title} — feature ${heroFeatureIndex + 1} of ${heroFeatures.length}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.heroFeatureModalClose}
+              onClick={() => setHeroFeatureIndex(null)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+            <p className={styles.heroFeatureModalKicker}>
+              Feature {heroFeatureIndex + 1} of {heroFeatures.length}
+            </p>
+            <h3 className={styles.heroFeatureModalTitle}>
+              {heroFeatures[heroFeatureIndex].title}
+            </h3>
+            {heroFeatures[heroFeatureIndex].detail && (
+              <p className={styles.heroFeatureModalText}>
+                {heroFeatures[heroFeatureIndex].detail}
+              </p>
+            )}
+            <div className={styles.heroFeatureModalNav}>
+              <button
+                type="button"
+                className={styles.heroFeatureModalNavBtn}
+                onClick={() => setHeroFeatureIndex((heroFeatureIndex - 1 + heroFeatures.length) % heroFeatures.length)}
+                aria-label="Previous feature"
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+                <span>Prev</span>
+              </button>
+              <button
+                type="button"
+                className={styles.heroFeatureModalNavBtn}
+                onClick={() => setHeroFeatureIndex((heroFeatureIndex + 1) % heroFeatures.length)}
+                aria-label="Next feature"
+              >
+                <span>Next</span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

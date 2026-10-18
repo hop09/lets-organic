@@ -483,9 +483,110 @@
   color: var(--primary-dark);
   font-size: 0.75rem;
   font-weight: 600;
+  font-family: inherit;
   padding: 0.3rem 0.7rem;
   border-radius: var(--radius-full);
   border: 1px solid rgba(91, 117, 83, 0.12);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.heroChip:hover {
+  background: rgba(91, 117, 83, 0.16);
+  border-color: rgba(91, 117, 83, 0.35);
+}
+
+/* Hero feature popup (modal) */
+.heroFeatureModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.heroFeatureModal {
+  position: relative;
+  background: #fff;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  padding-top: 2.5rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.heroFeatureModalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface, #f7f7f5);
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  border: none;
+}
+
+.heroFeatureModalClose:hover {
+  color: var(--text, #111);
+  background: rgba(91, 117, 83, 0.12);
+}
+
+.heroFeatureModalKicker {
+  color: var(--primary, #5b7553);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.75rem;
+}
+
+.heroFeatureModalTitle {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--text, #111);
+  margin: 0 0 0.75rem;
+}
+
+.heroFeatureModalText {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary, #555);
+  margin: 0 0 1.5rem;
+}
+
+.heroFeatureModalNav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.heroFeatureModalNavBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--surface, #f7f7f5);
+  color: var(--text, #111);
+  font-weight: 600;
+  font-size: 0.92rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.heroFeatureModalNavBtn:hover {
+  border-color: var(--primary, #5b7553);
+  background: rgba(91, 117, 83, 0.12);
 }
 
 /* Price Box */
