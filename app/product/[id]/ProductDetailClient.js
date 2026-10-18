@@ -208,8 +208,10 @@ export default function ProductDetailClient({ id }) {
   // Benefits added from the admin panel (unlimited list, one per line).
   // Format per line: "Title | Detail" — Title becomes the clickable heading,
   // Detail shows inside the popup (falls back to Title when omitted).
-  // NOTE: must be declared BEFORE benefitHeadingsList/benefitModal use it.
-  const benefits = useMemo(() => {
+  // NOTE: must be declared BEFORE benefitHeadingsList/benefitModal use it,
+  // and as a plain const (NOT a hook) because early returns above would make
+  // a hook call conditional, which crashes React.
+  const benefits = (() => {
     const list = Array.isArray(product?.benefits)
       ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
       : [];
@@ -220,7 +222,7 @@ export default function ProductDetailClient({ id }) {
       }
       return { title: b.trim(), detail: '' };
     });
-  }, [product?.benefits]);
+  })();
 
   // Shared benefit pieces — used in the product overview AND the standalone
   // benefits section. Headings open the same popup.
