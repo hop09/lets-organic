@@ -14,10 +14,10 @@ export async function GET() {
       settings = await SiteSettings.create({});
     }
 
-    // If the DB has no categories yet, persist the fallback list once so the
-    // categories become real database records (editable + deletable) instead
-    // of hardcoded read-only fallbacks.
-    if (!settings.categories || settings.categories.length === 0) {
+    // Seed the fallback list ONLY when categories were never initialized
+    // (null/undefined). An empty array means the admin intentionally deleted
+    // all categories — that must be respected, never re-seeded.
+    if (!settings.categories) {
       settings.categories = fallbackCategories;
       settings.markModified('categories');
       await settings.save();
@@ -84,7 +84,9 @@ export async function POST(request) {
       settings = await SiteSettings.create({});
     }
 
-    if (!settings.categories || settings.categories.length === 0) {
+    // Seed ONLY when never initialized. An empty array = admin deleted all,
+    // so a newly added category must not resurrect the fallbacks.
+    if (!settings.categories) {
       settings.categories = fallbackCategories;
     }
 
@@ -149,9 +151,8 @@ export async function DELETE(request) {
       settings = await SiteSettings.create({});
     }
 
-    // If the DB has no categories yet, seed the fallback list first so the
-    // delete operates on real records (not hardcoded fallbacks).
-    if (!settings.categories || settings.categories.length === 0) {
+    // Seed ONLY when never initialized. An empty array = admin deleted all.
+    if (!settings.categories) {
       settings.categories = fallbackCategories;
     }
 
