@@ -14,9 +14,18 @@ export async function GET() {
       settings = await SiteSettings.create({});
     }
 
-    let categories = settings.categories && settings.categories.length > 0
-      ? settings.categories.toObject ? settings.categories.toObject() : settings.categories
-      : fallbackCategories;
+    // If the DB has no categories yet, persist the fallback list once so the
+    // categories become real database records (editable + deletable) instead
+    // of hardcoded read-only fallbacks.
+    if (!settings.categories || settings.categories.length === 0) {
+      settings.categories = fallbackCategories;
+      settings.markModified('categories');
+      await settings.save();
+    }
+
+    let categories = settings.categories && settings.categories.toObject
+      ? settings.categories.toObject()
+      : settings.categories;
 
     // Dynamically calculate product counts for each category
     try {
@@ -136,8 +145,14 @@ export async function DELETE(request) {
     await connectToDatabase();
     let settings = await SiteSettings.findOne();
 
-    if (!settings || !settings.categories) {
-      return NextResponse.json({ error: 'No categories found' }, { status: 404 });
+    if (!settings) {
+      settings = await SiteSettings.create({});
+    }
+
+    // If the DB has no categories yet, seed the fallback list first so the
+    // delete operates on real records (not hardcoded fallbacks).
+    if (!settings.categories || settings.categories.length === 0) {
+      settings.categories = fallbackCategories;
     }
 
     const initialLength = settings.categories.length;
