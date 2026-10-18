@@ -205,6 +205,13 @@ export default function ProductDetailClient({ id }) {
     );
   }
 
+  // Benefits added from the admin panel (unlimited list, one per line).
+  // Shown only when the product actually has benefits.
+  // NOTE: must be declared BEFORE benefitHeadingsList/benefitModal use it.
+  const benefits = Array.isArray(product?.benefits)
+    ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
+    : [];
+
   // Shared benefit pieces — used in the product overview AND the standalone
   // benefits section. Headings open the same popup.
   const benefitHeadingsList = (
@@ -278,12 +285,6 @@ export default function ProductDetailClient({ id }) {
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : 0;
-
-  // Benefits added from the admin panel (unlimited list, one per line).
-  // Shown only when the product actually has benefits.
-  const benefits = Array.isArray(product?.benefits)
-    ? product.benefits.filter((b) => typeof b === 'string' && b.trim())
-    : [];
 
   const handleAddToCart = () => {
     addItem(product, quantity);
