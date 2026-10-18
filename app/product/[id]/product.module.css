@@ -442,38 +442,20 @@
   margin: 2px 0 0;
 }
 
-.benefitsList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md) var(--space-xl);
+/* Benefits inside the product overview (compact) */
+.overviewBenefits {
+  margin: var(--space-lg) 0;
+  padding: var(--space-lg);
+  background: var(--surface);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-lg);
 }
 
-@media (max-width: 640px) {
-  .benefitsList {
-    grid-template-columns: 1fr;
-  }
-}
-
-.benefitItem {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-sm);
+.overviewBenefitsLabel {
+  font-weight: 700;
   font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-.benefitDot {
-  width: 10px;
-  height: 10px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-light);
-  flex-shrink: 0;
+  margin: 0 0 var(--space-md);
+  color: var(--text);
 }
 
 /* Benefits tab — clickable headings, each opens the benefit popup */
