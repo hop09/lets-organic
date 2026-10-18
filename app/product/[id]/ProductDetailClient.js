@@ -374,6 +374,290 @@ export default function ProductDetailClient({ id }) {
             )}
           </div>
 
+          {/* Tabs — sits right below the image slider (mobile) / full width below gallery+info (desktop) */}
+          <div className={styles.tabsBlock}>
+            <div className={styles.tabs}>
+              <button
+                className={`${styles.tab} ${activeTab === 'reviews' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('reviews')}
+              >
+                Customer Reviews ({approvedReviews.length})
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'description' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('description')}
+              >
+                Description
+              </button>
+              {/* Benefits tab — shown only when the admin added benefits */}
+              {benefits.length > 0 && (
+                <button
+                  className={`${styles.tab} ${activeTab === 'benefits' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('benefits')}
+                >
+                  Benefits ({benefits.length})
+                </button>
+              )}
+              <button
+                className={`${styles.tab} ${activeTab === 'features' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('features')}
+              >
+                Organic Highlights
+              </button>
+            </div>
+    
+            <div className={styles.tabContent}>
+              {/* TAB: REVIEWS (TASK 6: REALTIME FEEDBACK SYSTEM) */}
+              {activeTab === 'reviews' && (
+                <div>
+                  <div className={styles.reviewSummary}>
+                    <div className={styles.reviewBig}>
+                      <span className={styles.reviewBigNumber}>
+                        {product.rating?.toFixed(1) || '5.0'}
+                      </span>
+                      <div className="stars">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={18}
+                            className={i < Math.floor(product.rating || 5) ? 'star' : 'star-empty'}
+                            fill={i < Math.floor(product.rating || 5) ? 'currentColor' : 'none'}
+                          />
+                        ))}
+                      </div>
+                      <span className={styles.reviewBigCount}>
+                        {approvedReviews.length > 0
+                          ? `Based on ${approvedReviews.length} customer reviews`
+                          : 'No reviews yet — be the first to review'}
+                      </span>
+                    </div>
+                  </div>
+    
+                  <div className={styles.reviewGrid}>
+                    {/* Left Column: Live Approved Reviews */}
+                    <div>
+                      <h3 style={{ marginBottom: '1.25rem', fontSize: '1.15rem', fontWeight: 700 }}>
+                        What Our Customers Are Saying
+                      </h3>
+    
+                      {approvedReviews.length === 0 ? (
+                        <div className={styles.reviewItem}>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                            Be the first to leave a review for this organic formulation! Fill out the feedback form to share your experience.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className={styles.reviewList}>
+                          {approvedReviews.map((rev) => (
+                            <div key={rev._id} className={styles.reviewItem}>
+                              <div className={styles.reviewItemHeader}>
+                                <div className={styles.reviewAuthor}>
+                                  <span>{rev.userName}</span>
+                                </div>
+                                <span className={styles.reviewDate}>
+                                  {new Date(rev.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+    
+                              <div style={{ display: 'flex', gap: 2, marginBottom: '0.5rem' }}>
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={13}
+                                    fill={i < rev.rating ? '#C8956C' : 'none'}
+                                    color="#C8956C"
+                                  />
+                                ))}
+                              </div>
+    
+                              {rev.title && (
+                                <h4 className={styles.reviewItemTitle}>{rev.title}</h4>
+                              )}
+                              <p className={styles.reviewItemComment}>{rev.comment}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+    
+                    {/* Right Column: Submit Feedback Form */}
+                    <div className={styles.reviewFormCard}>
+                      <h3 className={styles.reviewFormTitle}>Share Your Experience</h3>
+                      <p className={styles.reviewFormDesc}>
+                        Your feedback helps our organic community grow. Submitted reviews are reviewed by our team and posted live.
+                      </p>
+    
+                      {reviewSuccessMsg && (
+                        <div style={{
+                          background: 'rgba(40,167,69,0.12)',
+                          border: '1px solid rgba(40,167,69,0.3)',
+                          color: '#28A745',
+                          padding: '0.85rem 1rem',
+                          borderRadius: 'var(--radius-md)',
+                          marginBottom: '1rem',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <Check size={18} />
+                          <span>{reviewSuccessMsg}</span>
+                        </div>
+                      )}
+    
+                      {reviewErrorMsg && (
+                        <div style={{
+                          background: 'rgba(220,53,69,0.12)',
+                          border: '1px solid rgba(220,53,69,0.3)',
+                          color: '#DC3545',
+                          padding: '0.85rem 1rem',
+                          borderRadius: 'var(--radius-md)',
+                          marginBottom: '1rem',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <AlertCircle size={18} />
+                          <span>{reviewErrorMsg}</span>
+                        </div>
+                      )}
+    
+                      <form onSubmit={handleSubmitReview}>
+                        <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                          Your Overall Rating *
+                        </label>
+                        <div className={styles.starPicker}>
+                          {[1, 2, 3, 4, 5].map((starVal) => (
+                            <button
+                              type="button"
+                              key={starVal}
+                              onClick={() => setReviewRating(starVal)}
+                              className={styles.starBtn}
+                            >
+                              <Star
+                                size={24}
+                                fill={starVal <= reviewRating ? '#C8956C' : 'none'}
+                                color="#C8956C"
+                              />
+                            </button>
+                          ))}
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, marginLeft: '6px', color: 'var(--text-secondary)' }}>
+                            {reviewRating} of 5 Stars
+                          </span>
+                        </div>
+    
+                        <input
+                          type="text"
+                          required
+                          className={styles.reviewInput}
+                          value={reviewName}
+                          onChange={(e) => setReviewName(e.target.value)}
+                          placeholder="Your Full Name *"
+                        />
+    
+                        <input
+                          type="email"
+                          required
+                          className={styles.reviewInput}
+                          value={reviewEmail}
+                          onChange={(e) => setReviewEmail(e.target.value)}
+                          placeholder="Your Email Address *"
+                        />
+    
+                        <input
+                          type="text"
+                          className={styles.reviewInput}
+                          value={reviewTitle}
+                          onChange={(e) => setReviewTitle(e.target.value)}
+                          placeholder="Review Headline (e.g. Pure glowing skin in 1 week)"
+                        />
+    
+                        <textarea
+                          required
+                          className={styles.reviewInput}
+                          style={{ minHeight: '110px', resize: 'vertical' }}
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          placeholder="Write your honest review and experience with this product... *"
+                        />
+    
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={submittingReview}
+                          style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                          {submittingReview ? (
+                            'Submitting Feedback...'
+                          ) : (
+                            <>
+                              <Send size={16} /> Submit Feedback For Approval
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              )}
+    
+              {/* TAB: DESCRIPTION */}
+              {activeTab === 'description' && (
+                <div className={styles.descriptionTab}>
+                  <p>{product.description}</p>
+                  <div className={styles.highlightBox}>
+                    <Leaf size={20} />
+                    <div>
+                      <h4>Why Organic Matters</h4>
+                      <p>Our products are sourced from certified organic farms and producers, ensuring you get the purest, most natural ingredients without harmful chemicals or synthetic pesticides.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+    
+              {/* TAB: BENEFITS */}
+              {activeTab === 'benefits' && benefits.length > 0 && (
+                <div>
+                  <div className={styles.benefitsHeading}>
+                    <span className={styles.benefitsIcon}>
+                      <Sparkles size={20} />
+                    </span>
+                    <div>
+                      <h3 className={styles.benefitsTitle}>Key Benefits</h3>
+                      <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
+                    </div>
+                  </div>
+                  <ul className={styles.benefitsList}>
+                    {benefits.map((benefit, i) => (
+                      <li key={i} className={styles.benefitItem}>
+                        <span className={styles.benefitDot} aria-hidden="true" />
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+    
+              {/* TAB: FEATURES */}
+              {activeTab === 'features' && (
+                <ul className={styles.featuresList}>
+                  {(product.features?.length > 0 ? product.features : [
+                    '100% Certified Organic & Non-GMO Ingredients',
+                    'Sustainably Cold-Pressed Botanical Extract',
+                    'Cruelty-Free, Vegan & Eco-Packaged',
+                    'Formulated without parabens, sulfates, or artificial fragrances'
+                  ]).map((f, i) => (
+                    <li key={i} className={styles.featureItem}>
+                      <Check size={18} className={styles.featureCheck} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
           {/* Product Info */}
           <div className={styles.productInfo}>
             <div className={styles.tags}>
@@ -487,291 +771,6 @@ export default function ProductDetailClient({ id }) {
         </div>
       </section>
 
-      {/* Tabs */}
-      <section className="section">
-        <div className="container-wide">
-          <div className={styles.tabs}>
-            <button
-              className={`${styles.tab} ${activeTab === 'reviews' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('reviews')}
-            >
-              Customer Reviews ({approvedReviews.length})
-            </button>
-            <button
-              className={`${styles.tab} ${activeTab === 'description' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('description')}
-            >
-              Description
-            </button>
-            {/* Benefits tab — shown only when the admin added benefits */}
-            {benefits.length > 0 && (
-              <button
-                className={`${styles.tab} ${activeTab === 'benefits' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('benefits')}
-              >
-                Benefits ({benefits.length})
-              </button>
-            )}
-            <button
-              className={`${styles.tab} ${activeTab === 'features' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('features')}
-            >
-              Organic Highlights
-            </button>
-          </div>
-
-          <div className={styles.tabContent}>
-            {/* TAB: REVIEWS (TASK 6: REALTIME FEEDBACK SYSTEM) */}
-            {activeTab === 'reviews' && (
-              <div>
-                <div className={styles.reviewSummary}>
-                  <div className={styles.reviewBig}>
-                    <span className={styles.reviewBigNumber}>
-                      {product.rating?.toFixed(1) || '5.0'}
-                    </span>
-                    <div className="stars">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={18}
-                          className={i < Math.floor(product.rating || 5) ? 'star' : 'star-empty'}
-                          fill={i < Math.floor(product.rating || 5) ? 'currentColor' : 'none'}
-                        />
-                      ))}
-                    </div>
-                    <span className={styles.reviewBigCount}>
-                      {approvedReviews.length > 0
-                        ? `Based on ${approvedReviews.length} customer reviews`
-                        : 'No reviews yet — be the first to review'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className={styles.reviewGrid}>
-                  {/* Left Column: Live Approved Reviews */}
-                  <div>
-                    <h3 style={{ marginBottom: '1.25rem', fontSize: '1.15rem', fontWeight: 700 }}>
-                      What Our Customers Are Saying
-                    </h3>
-
-                    {approvedReviews.length === 0 ? (
-                      <div className={styles.reviewItem}>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                          Be the first to leave a review for this organic formulation! Fill out the feedback form to share your experience.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className={styles.reviewList}>
-                        {approvedReviews.map((rev) => (
-                          <div key={rev._id} className={styles.reviewItem}>
-                            <div className={styles.reviewItemHeader}>
-                              <div className={styles.reviewAuthor}>
-                                <span>{rev.userName}</span>
-                              </div>
-                              <span className={styles.reviewDate}>
-                                {new Date(rev.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 2, marginBottom: '0.5rem' }}>
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={13}
-                                  fill={i < rev.rating ? '#C8956C' : 'none'}
-                                  color="#C8956C"
-                                />
-                              ))}
-                            </div>
-
-                            {rev.title && (
-                              <h4 className={styles.reviewItemTitle}>{rev.title}</h4>
-                            )}
-                            <p className={styles.reviewItemComment}>{rev.comment}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Column: Submit Feedback Form */}
-                  <div className={styles.reviewFormCard}>
-                    <h3 className={styles.reviewFormTitle}>Share Your Experience</h3>
-                    <p className={styles.reviewFormDesc}>
-                      Your feedback helps our organic community grow. Submitted reviews are reviewed by our team and posted live.
-                    </p>
-
-                    {reviewSuccessMsg && (
-                      <div style={{
-                        background: 'rgba(40,167,69,0.12)',
-                        border: '1px solid rgba(40,167,69,0.3)',
-                        color: '#28A745',
-                        padding: '0.85rem 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: '1rem',
-                        fontSize: '0.875rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <Check size={18} />
-                        <span>{reviewSuccessMsg}</span>
-                      </div>
-                    )}
-
-                    {reviewErrorMsg && (
-                      <div style={{
-                        background: 'rgba(220,53,69,0.12)',
-                        border: '1px solid rgba(220,53,69,0.3)',
-                        color: '#DC3545',
-                        padding: '0.85rem 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: '1rem',
-                        fontSize: '0.875rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <AlertCircle size={18} />
-                        <span>{reviewErrorMsg}</span>
-                      </div>
-                    )}
-
-                    <form onSubmit={handleSubmitReview}>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
-                        Your Overall Rating *
-                      </label>
-                      <div className={styles.starPicker}>
-                        {[1, 2, 3, 4, 5].map((starVal) => (
-                          <button
-                            type="button"
-                            key={starVal}
-                            onClick={() => setReviewRating(starVal)}
-                            className={styles.starBtn}
-                          >
-                            <Star
-                              size={24}
-                              fill={starVal <= reviewRating ? '#C8956C' : 'none'}
-                              color="#C8956C"
-                            />
-                          </button>
-                        ))}
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, marginLeft: '6px', color: 'var(--text-secondary)' }}>
-                          {reviewRating} of 5 Stars
-                        </span>
-                      </div>
-
-                      <input
-                        type="text"
-                        required
-                        className={styles.reviewInput}
-                        value={reviewName}
-                        onChange={(e) => setReviewName(e.target.value)}
-                        placeholder="Your Full Name *"
-                      />
-
-                      <input
-                        type="email"
-                        required
-                        className={styles.reviewInput}
-                        value={reviewEmail}
-                        onChange={(e) => setReviewEmail(e.target.value)}
-                        placeholder="Your Email Address *"
-                      />
-
-                      <input
-                        type="text"
-                        className={styles.reviewInput}
-                        value={reviewTitle}
-                        onChange={(e) => setReviewTitle(e.target.value)}
-                        placeholder="Review Headline (e.g. Pure glowing skin in 1 week)"
-                      />
-
-                      <textarea
-                        required
-                        className={styles.reviewInput}
-                        style={{ minHeight: '110px', resize: 'vertical' }}
-                        value={reviewComment}
-                        onChange={(e) => setReviewComment(e.target.value)}
-                        placeholder="Write your honest review and experience with this product... *"
-                      />
-
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        disabled={submittingReview}
-                        style={{ width: '100%', justifyContent: 'center' }}
-                      >
-                        {submittingReview ? (
-                          'Submitting Feedback...'
-                        ) : (
-                          <>
-                            <Send size={16} /> Submit Feedback For Approval
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: DESCRIPTION */}
-            {activeTab === 'description' && (
-              <div className={styles.descriptionTab}>
-                <p>{product.description}</p>
-                <div className={styles.highlightBox}>
-                  <Leaf size={20} />
-                  <div>
-                    <h4>Why Organic Matters</h4>
-                    <p>Our products are sourced from certified organic farms and producers, ensuring you get the purest, most natural ingredients without harmful chemicals or synthetic pesticides.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB: BENEFITS */}
-            {activeTab === 'benefits' && benefits.length > 0 && (
-              <div>
-                <div className={styles.benefitsHeading}>
-                  <span className={styles.benefitsIcon}>
-                    <Sparkles size={20} />
-                  </span>
-                  <div>
-                    <h3 className={styles.benefitsTitle}>Key Benefits</h3>
-                    <p className={styles.benefitsSubtitle}>Why you&apos;ll love this product</p>
-                  </div>
-                </div>
-                <ul className={styles.benefitsList}>
-                  {benefits.map((benefit, i) => (
-                    <li key={i} className={styles.benefitItem}>
-                      <span className={styles.benefitDot} aria-hidden="true" />
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* TAB: FEATURES */}
-            {activeTab === 'features' && (
-              <ul className={styles.featuresList}>
-                {(product.features?.length > 0 ? product.features : [
-                  '100% Certified Organic & Non-GMO Ingredients',
-                  'Sustainably Cold-Pressed Botanical Extract',
-                  'Cruelty-Free, Vegan & Eco-Packaged',
-                  'Formulated without parabens, sulfates, or artificial fragrances'
-                ]).map((f, i) => (
-                  <li key={i} className={styles.featureItem}>
-                    <Check size={18} className={styles.featureCheck} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

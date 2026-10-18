@@ -43,6 +43,19 @@
   padding-bottom: var(--space-2xl);
 }
 
+/* Tabs block lives between the gallery and the product info inside
+   productMain: on mobile (single column) it sits right below the image
+   slider; on desktop it spans the full width under gallery + info. */
+.tabsBlock {
+  margin-top: var(--space-md);
+}
+
+@media (min-width: 1025px) {
+  .tabsBlock {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Gallery */
 .gallery {
   position: sticky;
