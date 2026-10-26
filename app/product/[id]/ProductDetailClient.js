@@ -27,6 +27,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
 import ProductCard from '@/components/ProductCard/ProductCard';
+import DentofitStory from '@/components/DentofitStory/DentofitStory';
 import SafeImage from '@/components/SafeImage/SafeImage';
 import styles from './product.module.css';
 
@@ -624,6 +625,12 @@ export default function ProductDetailClient({ id }) {
         </div>
       </section>
 
+      {/* Product story — taglines, trust messages, herbs, journey */}
+      <section className="section">
+        <div className="container-wide">
+          <DentofitStory />
+        </div>
+      </section>
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
