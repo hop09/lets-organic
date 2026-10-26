@@ -15,7 +15,6 @@ import {
   Truck,
   ShieldCheck,
   RotateCcw,
-  Leaf,
   Check,
   Video,
   Send,
@@ -75,7 +74,6 @@ export default function ProductDetailClient({ id }) {
   // Active media item in carousel (index of combined media: images + videos)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('description');
   const [addedToCart, setAddedToCart] = useState(false);
 
   // Review submission form state
@@ -504,58 +502,6 @@ export default function ProductDetailClient({ id }) {
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Tabs — sits right below the image slider (mobile) / full width below gallery+info (desktop) */}
-          <div className={styles.tabsBlock}>
-            <div className={styles.tabs}>
-              <button
-                className={`${styles.tab} ${activeTab === 'description' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('description')}
-              >
-                Description
-              </button>
-              <button
-                className={`${styles.tab} ${activeTab === 'features' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('features')}
-              >
-                Organic Highlights
-              </button>
-            </div>
-    
-            <div className={styles.tabContent}>
-    
-              {/* TAB: DESCRIPTION */}
-              {activeTab === 'description' && (
-                <div className={styles.descriptionTab}>
-                  <p>{product.description}</p>
-                  <div className={styles.highlightBox}>
-                    <Leaf size={20} />
-                    <div>
-                      <h4>Why Organic Matters</h4>
-                      <p>Our products are sourced from certified organic farms and producers, ensuring you get the purest, most natural ingredients without harmful chemicals or synthetic pesticides.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-    
-              {/* TAB: FEATURES */}
-              {activeTab === 'features' && (
-                <ul className={styles.featuresList}>
-                  {(product.features?.length > 0 ? product.features : [
-                    '100% Certified Organic & Non-GMO Ingredients',
-                    'Sustainably Cold-Pressed Botanical Extract',
-                    'Cruelty-Free, Vegan & Eco-Packaged',
-                    'Formulated without parabens, sulfates, or artificial fragrances'
-                  ]).map((f, i) => (
-                    <li key={i} className={styles.featureItem}>
-                      <Check size={18} className={styles.featureCheck} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </div>
 
           {/* Product Info */}
