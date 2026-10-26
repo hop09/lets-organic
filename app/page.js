@@ -66,6 +66,8 @@ export default function HomePage() {
   const [heroQty, setHeroQty] = useState(1);
   // Hero feature popup: null = closed, number = index of the feature shown
   const [heroFeatureIndex, setHeroFeatureIndex] = useState(null);
+  // Benefit popup: null = closed, number = index of the benefit being shown
+  const [benefitIndex, setBenefitIndex] = useState(null);
 
   // Split hero features ("Title — detail") into clickable headings + popup detail
   const heroFeatures = useMemo(() => {
@@ -92,6 +94,50 @@ export default function HomePage() {
       document.body.style.overflow = prevOverflow;
     };
   }, [heroFeatureIndex]);
+
+  // Admin benefits for the hero product: { title, detail, image } objects
+  // (legacy plain strings still accepted). Shown in the Key Benefits
+  // section below the showcase; each opens the benefit popup.
+  const benefits = useMemo(() => {
+    const list = Array.isArray(heroProduct?.benefits)
+      ? heroProduct.benefits.filter(Boolean)
+      : [];
+    return list
+      .map((b) => {
+        if (typeof b === 'string') {
+          const t = b.trim();
+          const idx = t.indexOf('|');
+          if (idx > 0)
+            return {
+              title: t.slice(0, idx).trim(),
+              detail: t.slice(idx + 1).trim(),
+              image: '',
+            };
+          return { title: t, detail: '', image: '' };
+        }
+        return {
+          title: String(b.title || '').trim(),
+          detail: String(b.detail || '').trim(),
+          image: String(b.image || '').trim(),
+        };
+      })
+      .filter((b) => b.title || b.detail);
+  }, [heroProduct]);
+
+  // Close the benefit popup on Escape + lock body scroll while open
+  useEffect(() => {
+    if (benefitIndex === null) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setBenefitIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [benefitIndex]);
 
   const handleAddHeroToCart = () => {
     if (!heroProduct) return;
@@ -350,6 +396,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== KEY BENEFITS — the main product's benefits, not just a preview ===== */}
+      {benefits.length > 0 && (
+        <section className={styles.benefitsSection}>
+          <div className={styles.benefitsInner}>
+            <div className={styles.benefitsHeader}>
+              <span className={styles.benefitsKicker}>Why you will love it</span>
+              <h2 className={styles.benefitsTitle}>Key Benefits</h2>
+              <p className={styles.benefitsSubtitle}>
+                Tap a benefit to see the full detail.
+              </p>
+            </div>
+            <div className={styles.benefitsGrid}>
+              {benefits.map((benefit, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={styles.benefitCard}
+                  onClick={() => setBenefitIndex(i)}
+                >
+                  {benefit.image ? (
+                    <img
+                      src={benefit.image}
+                      alt=""
+                      className={styles.benefitCardThumb}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className={styles.benefitCardNum} aria-hidden="true">{i + 1}</span>
+                  )}
+                  <span className={styles.benefitCardBody}>
+                    <span className={styles.benefitCardTitle}>{benefit.title}</span>
+                    {benefit.detail && (
+                      <span className={styles.benefitCardDetail}>{benefit.detail}</span>
+                    )}
+                  </span>
+                  <ChevronRight size={18} className={styles.benefitCardChevron} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hero feature popup — one feature at a time, prev/next to browse */}
       {heroFeatureIndex !== null && heroFeatures.length > 0 && (
         <div
@@ -397,6 +486,65 @@ export default function HomePage() {
                 className={styles.heroFeatureModalNavBtn}
                 onClick={() => setHeroFeatureIndex((heroFeatureIndex + 1) % heroFeatures.length)}
                 aria-label="Next feature"
+              >
+                <span>Next</span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Benefit popup — full-size image, prev/next to browse */}
+      {benefitIndex !== null && benefits.length > 0 && benefits[benefitIndex] && (
+        <div
+          className={styles.benefitModalOverlay}
+          onClick={() => setBenefitIndex(null)}
+        >
+          <div
+            className={`${styles.benefitModal} ${benefits[benefitIndex].image ? styles.benefitModalWithImage : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Benefit ${benefitIndex + 1} of ${benefits.length}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.benefitModalClose}
+              onClick={() => setBenefitIndex(null)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+            <p className={styles.benefitModalKicker}>
+              Benefit {benefitIndex + 1} of {benefits.length}
+            </p>
+            {benefits[benefitIndex].image && (
+              <img
+                src={benefits[benefitIndex].image}
+                alt={benefits[benefitIndex].title}
+                className={styles.benefitModalImage}
+              />
+            )}
+            <h3 className={styles.benefitModalTitle}>{benefits[benefitIndex].title}</h3>
+            <p className={styles.benefitModalText}>
+              {benefits[benefitIndex].detail || benefits[benefitIndex].title}
+            </p>
+            <div className={styles.benefitModalNav}>
+              <button
+                type="button"
+                className={styles.benefitModalNavBtn}
+                onClick={() => setBenefitIndex((benefitIndex - 1 + benefits.length) % benefits.length)}
+                aria-label="Previous benefit"
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+                <span>Prev</span>
+              </button>
+              <button
+                type="button"
+                className={styles.benefitModalNavBtn}
+                onClick={() => setBenefitIndex((benefitIndex + 1) % benefits.length)}
+                aria-label="Next benefit"
               >
                 <span>Next</span>
                 <ChevronRight size={18} aria-hidden="true" />
