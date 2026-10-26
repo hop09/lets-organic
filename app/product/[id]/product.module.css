@@ -537,7 +537,13 @@
   padding-top: calc(var(--space-2xl) + var(--space-sm));
   max-width: 480px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
+}
+
+.benefitModalWithImage {
+  max-width: 640px;
 }
 
 .benefitModalClose {
@@ -588,8 +594,9 @@
 
 .benefitModalImage {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
   border-radius: var(--radius-md, 12px);
   margin-bottom: var(--space-md);
   background: var(--surface, #f4f4f4);
