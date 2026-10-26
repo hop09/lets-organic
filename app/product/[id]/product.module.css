@@ -520,11 +520,11 @@
 .benefitModalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-lg);
+  padding: 0;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
 }
@@ -532,18 +532,18 @@
 .benefitModal {
   position: relative;
   background: #fff;
-  border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
-  padding-top: calc(var(--space-2xl) + var(--space-sm));
-  max-width: 480px;
-  width: 100%;
-  max-height: 90vh;
+  border-radius: 0;
+  padding: 1.25rem;
+  padding-top: 3.75rem;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg);
-}
-
-.benefitModalWithImage {
-  max-width: 640px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .benefitModalClose {
@@ -593,9 +593,9 @@
 }
 
 .benefitModalImage {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: auto;
-  max-height: 70vh;
   object-fit: contain;
   border-radius: var(--radius-md, 12px);
   margin-bottom: var(--space-md);
