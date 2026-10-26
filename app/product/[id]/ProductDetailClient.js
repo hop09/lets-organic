@@ -545,14 +545,6 @@ export default function ProductDetailClient({ id }) {
 
             <p className={styles.description}>{product.description}</p>
 
-            {/* Benefits in the product overview — tap a heading for the popup */}
-            {benefits.length > 0 && (
-              <div className={styles.overviewBenefits}>
-                <p className={styles.overviewBenefitsLabel}>Key Benefits</p>
-                {benefitHeadingsList}
-              </div>
-            )}
-
             {/* Quantity & Actions */}
             <div className={styles.actionsGroup}>
               <div className={styles.quantityPicker}>
