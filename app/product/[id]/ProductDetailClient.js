@@ -19,7 +19,6 @@ import {
   Video,
   Send,
   MessageSquare,
-  Sparkles,
   AlertCircle,
   X,
 } from 'lucide-react';
@@ -236,8 +235,8 @@ export default function ProductDetailClient({ id }) {
       .filter((b) => b.title || b.detail);
   })();
 
-  // Shared benefit pieces — used in the product overview AND the standalone
-  // benefits section. Headings open the same popup.
+  // Shared benefit pieces — shown below the description in the product
+  // overview. Headings open the same popup.
   const benefitHeadingsList = (
     <ul className={styles.benefitHeadings}>
       {benefits.map((benefit, i) => (
@@ -545,6 +544,14 @@ export default function ProductDetailClient({ id }) {
 
             <p className={styles.description}>{product.description}</p>
 
+            {/* Benefits below the description — tap a heading for the popup */}
+            {benefits.length > 0 && (
+              <div className={styles.overviewBenefits}>
+                <p className={styles.overviewBenefitsLabel}>Key Benefits</p>
+                {benefitHeadingsList}
+              </div>
+            )}
+
             {/* Quantity & Actions */}
             <div className={styles.actionsGroup}>
               <div className={styles.quantityPicker}>
@@ -617,24 +624,6 @@ export default function ProductDetailClient({ id }) {
         </div>
       </section>
 
-
-      {/* Benefits — standalone section (out of the tabs) */}
-      {benefits.length > 0 && (
-        <section className="section">
-          <div className="container-wide">
-            <div className={styles.benefitsHeading}>
-              <span className={styles.benefitsIcon}>
-                <Sparkles size={20} />
-              </span>
-              <div>
-                <h2 className={styles.benefitsTitle}>Key Benefits</h2>
-                <p className={styles.benefitsSubtitle}>Tap a benefit to read more</p>
-              </div>
-            </div>
-            {benefitHeadingsList}
-          </div>
-        </section>
-      )}
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
