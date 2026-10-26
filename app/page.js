@@ -1,35 +1,26 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
-  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Truck,
-  ShieldCheck,
-  RotateCcw,
-  Headphones,
   Leaf,
   Sparkles,
   ShoppingBag,
   Star,
   Eye,
   Check,
-  Copy,
-  Tag,
-  Percent,
   Minus,
   Plus,
   Zap,
   Heart,
   X,
 } from 'lucide-react';
-import ProductCard from '@/components/ProductCard/ProductCard';
 import SafeImage from '@/components/SafeImage/SafeImage';
-import { products as fallbackProducts, categories } from '@/data/products';
+import { products as fallbackProducts } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -42,13 +33,7 @@ export default function HomePage() {
 
   // Real-time products from MongoDB Atlas
   const [productsList, setProductsList] = useState(fallbackProducts);
-  const [copiedCode, setCopiedCode] = useState(false);
   const [heroAdded, setHeroAdded] = useState(false);
-
-  // Carousel scroll state
-  const scrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
 
   // Fetch real-time products from database
   useEffect(() => {
@@ -68,42 +53,12 @@ export default function HomePage() {
     loadDatabaseProducts();
   }, []);
 
-  // Compute Hero Product: explicit hero flag, or first product with highest rating
+  // The homepage shows ONE special product: explicit hero flag, or the first
+  // product (the live store has exactly one product). The footer comes from
+  // the root layout, so this page renders nothing else.
   const heroProduct = useMemo(() => {
     return productsList.find(p => p.isHero) || productsList[0] || fallbackProducts[0];
   }, [productsList]);
-
-  // Filtered collections
-  const newArrivals = useMemo(() => {
-    const filtered = productsList.filter(p => p.badge === 'New' || p.isNewArrival);
-    return filtered.length > 0 ? filtered : productsList.slice(0, 6);
-  }, [productsList]);
-
-  const bestSellers = useMemo(() => {
-    const filtered = productsList.filter(p => p.isBestSeller || (p.reviews && p.reviews > 60));
-    return filtered.length > 0 ? filtered : productsList.slice(4, 10);
-  }, [productsList]);
-
-  const saleProducts = useMemo(() => {
-    const filtered = productsList.filter(p => p.originalPrice && p.originalPrice > p.price);
-    return filtered.length > 0 ? filtered : productsList.slice(2, 6);
-  }, [productsList]);
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-  };
-
-  const scroll = (direction) => {
-    if (!scrollRef.current) return;
-    const scrollAmount = 320;
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-  };
 
   const router = useRouter();
   const { isWishlisted, toggleItem } = useWishlist();
@@ -138,12 +93,6 @@ export default function HomePage() {
     };
   }, [heroFeatureIndex]);
 
-  const copyCouponCode = (code) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2500);
-  };
-
   const handleAddHeroToCart = () => {
     if (!heroProduct) return;
     addItem(heroProduct, heroQty);
@@ -176,8 +125,6 @@ export default function HomePage() {
     setPrevHeroKey(heroKey);
     setActiveHeroImgIdx(0);
   }
-
-  const promo = settings?.promotionBanner;
 
   return (
     <>
@@ -400,337 +347,6 @@ export default function HomePage() {
               </div>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* ===== CATEGORIES ===== */}
-      <section className={`section ${styles.categorySection}`}>
-        <div className="container-wide">
-          <div className={styles.categorySectionHeader}>
-            <div className={styles.categoryHeaderContent}>
-              <span className={styles.categoryPillBadge}>
-                <Sparkles size={12} />
-                Curated Collections
-              </span>
-              <h2 className={styles.categorySectionTitle}>Shop by Category</h2>
-              <p className={styles.categorySectionSubtitle}>
-                Explore ethically crafted, certified organic essentials for body, mind, and home
-              </p>
-            </div>
-            <Link href="/shop" className={styles.categoryBrowseAllBtn}>
-              <span>Explore All Catalog</span>
-              <ArrowUpRight size={16} />
-            </Link>
-          </div>
-
-          <div className={styles.categoryGrid}>
-            {(settings?.categories?.length ? settings.categories : categories).map(cat => (
-              <Link
-                key={cat.slug || cat.id}
-                href={`/shop?category=${cat.slug || cat.id}`}
-                className={styles.categoryCard}
-              >
-                <div className={styles.categoryImgWrap}>
-                  <SafeImage src={cat.image} alt={cat.name} className={styles.categoryImg} fill sizes="(max-width: 768px) 50vw, 25vw" />
-                  <div className={styles.categoryGradientOverlay} />
-                </div>
-
-                <div className={styles.categoryTopPill}>
-                  <Leaf size={11} />
-                  <span>{cat.badge || `${cat.count} Products`}</span>
-                </div>
-
-                <div className={styles.categoryFloatingCard}>
-                  <div className={styles.categoryCardInfo}>
-                    <h3 className={styles.categoryCardTitle}>{cat.name}</h3>
-                    <span className={styles.categoryCardTagline}>{cat.tagline || 'Explore Collection'}</span>
-                  </div>
-                  <div className={styles.categoryCardArrow} aria-hidden="true">
-                    <ArrowUpRight size={14} />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== PROMOTION BANNER (TASK 4: PROMOTION BANNER) ===== */}
-      {promo?.enabled !== false && (
-        <section className={styles.promoBannerSection}>
-          <div className="container-wide">
-            <div
-              className={styles.promoBannerCard}
-              style={{
-                background: promo?.bgColor
-                  ? `linear-gradient(135deg, ${promo.bgColor} 0%, #1E281C 100%)`
-                  : undefined,
-              }}
-            >
-              <div>
-                <span className={styles.promoBadge}>
-                  <Percent size={13} />
-                  {promo?.badge || 'Seasonal Harvest Offer'}
-                </span>
-                <h2 className={styles.promoHeadline}>
-                  {promo?.headline || 'Experience Nature at Its Purest — 25% Off'}
-                </h2>
-                <p className={styles.promoSubheadline}>
-                  {promo?.subheadline ||
-                    'Handcrafted organic serums, cold-pressed botanicals & pure superfoods. Certified organic and sustainably sourced.'}
-                </p>
-
-                <div className={styles.promoCtas}>
-                  {promo?.couponCode && (
-                    <div
-                      className={styles.promoCodeBox}
-                      onClick={() => copyCouponCode(promo.couponCode)}
-                      title="Click to copy coupon code"
-                    >
-                      <Tag size={16} color="#FFE2B8" />
-                      <div>
-                        <div className={styles.promoCodeLabel}>Use Coupon Code</div>
-                        <div className={styles.promoCodeText}>{promo.couponCode}</div>
-                      </div>
-                      {copiedCode ? (
-                        <Check size={16} color="#75E089" />
-                      ) : (
-                        <Copy size={16} color="#FFE2B8" />
-                      )}
-                    </div>
-                  )}
-
-                  <Link
-                    href={promo?.buttonLink || '/shop'}
-                    className="btn btn-accent btn-lg"
-                  >
-                    {promo?.buttonText || 'Shop Offer Now'}
-                    <ArrowRight size={18} />
-                  </Link>
-                </div>
-              </div>
-
-              <div className={styles.promoImageWrap}>
-                <SafeImage
-                  src={
-                    promo?.imageUrl ||
-                    'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&fit=crop'
-                  }
-                  alt="Organic Promotion"
-                  className={styles.promoImg}
-                  width={800}
-                  height={450}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== NEW ARRIVALS CAROUSEL ===== */}
-      <section className="section">
-        <div className="container-wide">
-          <div className={styles.sectionHeader}>
-            <div>
-              <span className="section-badge">Fresh Harvest</span>
-              <h2 className="section-title">New Arrivals</h2>
-            </div>
-            <div className={styles.carouselNav}>
-              <button
-                className={styles.carouselBtn}
-                onClick={() => scroll('left')}
-                disabled={!canScrollLeft}
-                aria-label="Previous"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                className={styles.carouselBtn}
-                onClick={() => scroll('right')}
-                disabled={!canScrollRight}
-                aria-label="Next"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-          <div
-            className={styles.carouselTrack}
-            ref={scrollRef}
-            onScroll={handleScroll}
-          >
-            {newArrivals.map((product, i) => (
-              <div key={product._id || product.id || i} className={styles.carouselItem}>
-                <ProductCard product={product} index={i} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== BEST SELLERS ===== */}
-      <section className="section" style={{ background: 'var(--surface)' }}>
-        <div className="container-wide">
-          <div className={styles.sectionHeader}>
-            <div>
-              <span className="section-badge">Customer Favorites</span>
-              <h2 className="section-title">Best Sellers</h2>
-            </div>
-            <Link href="/shop" className={styles.viewAll}>
-              View All <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className={styles.productGrid}>
-            {bestSellers.slice(0, 8).map((product, i) => (
-              <ProductCard key={product._id || product.id || i} product={product} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== ON SALE NOW ===== */}
-      <section className={styles.flashSale}>
-        <div className="container-wide">
-          <div className={styles.flashInner}>
-            <div className={styles.flashContent}>
-              <span className={styles.flashBadge}>
-                <Tag size={14} />
-                On Sale Now
-              </span>
-              <h2 className={styles.flashTitle}>Up to 40% Off Selected Organic Superfoods</h2>
-              <p className={styles.flashDesc}>
-                Real savings on our certified organic supplements and wellness tonics — discounted prices you can grab right now.
-              </p>
-              <Link href="/shop" className="btn btn-primary btn-lg">
-                Shop The Sale <ArrowRight size={18} />
-              </Link>
-            </div>
-            <div className={styles.flashProducts}>
-              {saleProducts.slice(0, 2).map((product, i) => (
-                <ProductCard key={product._id || product.id || i} product={product} index={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== WHY CHOOSE US ===== */}
-      <section className={styles.whyUs}>
-        <div className="container-wide">
-          <div className={styles.whyUsGrid}>
-            <div className={styles.whyUsVisual}>
-              <SafeImage
-                src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&h=700&fit=crop"
-                alt="Organic farming"
-                className={styles.whyUsImg}
-                width={600}
-                height={700}
-              />
-              <div className={styles.whyUsBadge}>
-                <Sparkles size={20} />
-                <div>
-                  <strong>Certified Clean</strong>
-                  <span>Zero harmful chemicals</span>
-                </div>
-              </div>
-            </div>
-            <div className={styles.whyUsContent}>
-              <span className="section-badge">Our Commitment</span>
-              <h2 className="section-title">Why Choose Lets Organic?</h2>
-              <p className={styles.whyUsDesc}>
-                We believe that what goes on and into your body should come directly from clean, uncompromised nature. Every item in our store is thoroughly vetted for pure botanical excellence.
-              </p>
-              <div className={styles.whyUsList}>
-                <div className={styles.whyUsItem}>
-                  <div className={styles.whyUsItemIcon}>
-                    <Leaf size={20} />
-                  </div>
-                  <div>
-                    <h4>100% Certified Organic</h4>
-                    <p>Every product is certified by recognized organic authorities, with zero synthetic additives.</p>
-                  </div>
-                </div>
-                <div className={styles.whyUsItem}>
-                  <div className={styles.whyUsItemIcon}>
-                    <ShieldCheck size={20} />
-                  </div>
-                  <div>
-                    <h4>Sustainably Sourced</h4>
-                    <p>We partner directly with ethical farms that respect ecosystems, workers, and our planet.</p>
-                  </div>
-                </div>
-                <div className={styles.whyUsItem}>
-                  <div className={styles.whyUsItemIcon}>
-                    <Sparkles size={20} />
-                  </div>
-                  <div>
-                    <h4>Cold-Pressed & Pure</h4>
-                    <p>Gentle low-heat processing ensures maximum nutrient retention and potent botanical efficacy.</p>
-                  </div>
-                </div>
-              </div>
-              <Link href="/shop" className="btn btn-primary btn-lg">
-                Explore The Collection <ArrowRight size={18} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== TRUST BADGES (moved to bottom) ===== */}
-      <section className={styles.trustSection}>
-        <div className="container-wide">
-          <div className={styles.trustGrid}>
-            <div className={styles.trustItem}>
-              <div className={styles.trustIcon}>
-                <Truck size={22} />
-              </div>
-              <div>
-                <h4 className={styles.trustTitle}>
-                  {settings?.shipping?.freeDelivery
-                    ? 'Free Nationwide Delivery'
-                    : 'Fast Reliable Shipping'}
-                </h4>
-                <p className={styles.trustDesc}>
-                  {settings?.shipping?.freeDelivery
-                    ? '100% free delivery across Pakistan'
-                    : settings?.shipping?.freeDeliveryThreshold
-                    ? `Free delivery over PKR ${Number(settings.shipping.freeDeliveryThreshold).toLocaleString()}`
-                    : `Standard delivery PKR ${settings?.shipping?.deliveryFee || 250}`}
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.trustItem}>
-              <div className={styles.trustIcon}>
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <h4 className={styles.trustTitle}>100% Organic Certified</h4>
-                <p className={styles.trustDesc}>Authentic pure botanicals</p>
-              </div>
-            </div>
-
-            <div className={styles.trustItem}>
-              <div className={styles.trustIcon}>
-                <RotateCcw size={22} />
-              </div>
-              <div>
-                <h4 className={styles.trustTitle}>Easy Returns</h4>
-                <p className={styles.trustDesc}>7-day return guarantee</p>
-              </div>
-            </div>
-
-            <div className={styles.trustItem}>
-              <div className={styles.trustIcon}>
-                <Headphones size={22} />
-              </div>
-              <div>
-                <h4 className={styles.trustTitle}>Customer Care</h4>
-                <p className={styles.trustDesc}>Always here for your queries</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
