@@ -273,7 +273,7 @@ export default function ProductDetailClient({ id }) {
       onClick={() => setBenefitIndex(null)}
     >
       <div
-        className={styles.benefitModal}
+        className={`${styles.benefitModal} ${benefits[benefitIndex].image ? styles.benefitModalWithImage : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={`Benefit ${benefitIndex + 1} of ${benefits.length}`}
