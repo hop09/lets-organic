@@ -18,7 +18,12 @@ const OPTIMIZED_HOSTS = new Set(['images.unsplash.com']);
 
 function isOptimizable(src) {
   if (!src || typeof src !== 'string') return false;
-  // Local / public-folder assets are always safe to optimize.
+  // Admin-uploaded files under /uploads/ must skip the optimizer: on this
+  // deployment /_next/image rejects them ("isn't a valid image", HTTP 400)
+  // while the direct file serves fine. Plain <img> displays them, the same
+  // way the benefit thumbnails already display.
+  if (src.startsWith('/uploads/')) return false;
+  // Other local / public-folder assets are safe to optimize.
   if (src.startsWith('/') || src.startsWith('data:') || src.startsWith('blob:')) return true;
   try {
     return OPTIMIZED_HOSTS.has(new URL(src).hostname);
